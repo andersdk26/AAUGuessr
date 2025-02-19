@@ -1,0 +1,158 @@
+body {
+    margin: 60px 20px 20px 20px;
+}
+
+.no-select {
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+.reset {
+    all: unset;
+}
+
+.reset-space {
+    margin: 0;
+    border: 0;
+    padding: 0;
+}
+
+/* btn-navbar-toggler */
+@media (min-width: 576px) {
+    .navbar-expand-sm .btn-navbar-toggler {
+        display: none;
+    }
+}
+
+@media (min-width: 768px) {
+    .navbar-expand-md .btn-navbar-toggler {
+        display: none;
+    }
+}
+
+@media (min-width: 992px) {
+    .navbar-expand-lg .btn-navbar-toggler {
+        display: none;
+    }
+}
+
+@media (min-width: 1200px) {
+    .navbar-expand-xl .btn-navbar-toggler {
+        display: none;
+    }
+}
+
+@media (min-width: 1400px) {
+    .navbar-expand-xxl .btn-navbar-toggler {
+        display: none;
+    }
+}
+
+.navbar-button {
+    margin-right: 10px;
+}
+
+@media (max-width: 1199px) and (min-width: 992px) {
+    .device-left-col {
+        flex: 0 0 auto;
+        width: 49%;
+    }
+
+    .device-right-col {
+        flex: 0 0 auto;
+        width: 49%;
+    }
+
+    .device-right-container {
+        display: block;
+    }
+}
+
+@media (min-width: 1200px) {
+    .device-left-col {
+        flex: 0 0 auto;
+        width: 33.33333333%;
+    }
+
+    .device-right-col {
+        flex: 0 0 auto;
+        width: 66.66666667%;
+    }
+
+    .device-right-container {
+        display: block;
+    }
+}
+
+/* ListCard */
+.list-card-table > :not(caption):not(thead) > *:last-child > * {
+    border-width: 0;
+}
+
+.list-card-table {
+    margin: 0px;
+    border-radius: 5px;
+}
+
+.list-card-table thead {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background-color: white;
+}
+
+.list-card-table th {
+    font-size: small;
+    font-weight: lighter;
+    border-bottom: 1px solid #dee2e6;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+    width: 7px;
+    height: 7px;
+    transition: opacity 0.3s;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 7cm;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 7px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* Device */
+.left-box {
+    background-color: lightblue;
+    height: 450px;
+    width: 100%; /* Fylder hele bredden på mindre skærme */
+}
+
+.right-box {
+    background-color: lightcoral;
+    height: 450px;
+    width: 100%;
+}
+
+@media (min-width: 992px) {
+    .left-box {
+        width: 450px;
+        flex-shrink: 0;
+    }
+    .right-box {
+        flex-grow: 1;
+    }
+}
+
+.left-box,
+.right-box {
+    text-align: center;
+    font-weight: bold;
+}

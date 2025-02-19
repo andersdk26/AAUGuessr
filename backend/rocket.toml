@@ -1,0 +1,2 @@
+[default.databases.aag_db]
+url = "postgres://AAUGuessr-WebApp:abcd1234@localhost:5432/AAUGuessr"
