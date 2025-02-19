@@ -1,7 +1,7 @@
 import { useState } from "react";
 import BSTheme from "./BSTheme";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faBars } from "@fortawesome/free-solid-svg-icons";
+import { faBars, faUser } from "@fortawesome/free-solid-svg-icons";
 
 interface NavBarProps {
     title: string;
@@ -99,9 +99,19 @@ function NavBar({ title, pages }: NavBarProps) {
                         </ul>
                     </div>
                 </div>
-                {/* Theme button */}
                 <div className="justify-content-end">
+                    {/* Theme button */}
                     <BSTheme className="navbar-button" />
+                    {/* Account button */}
+                    <button
+                        title="Account"
+                        className="btn btn-outline-secondary navbar-button"
+                        onClick={() => {
+                            window.location.href = "/account";
+                        }}
+                    >
+                        <FontAwesomeIcon icon={faUser} className="fa-lg" />
+                    </button>
                     {/* Hamburger menu button */}
                     <button
                         title="Menu"
