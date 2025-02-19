@@ -6,6 +6,7 @@ import NavBar from "./components/NavBar";
 import Home from "./pages/Home";
 import HttpTest from "./pages/HttpTest";
 import Bootstrap from "./pages/Bootstrap";
+import NotFound from "./pages/NotFound";
 function App() {
     return (
         <>
@@ -32,6 +33,7 @@ function App() {
                         path="/bootstrap"
                         element={<Navigate to="/bootstrap/overview" />}
                     />
+                    <Route path="*" element={<NotFound />} />
                 </Routes>
             </BrowserRouter>
         </>
