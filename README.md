@@ -16,8 +16,8 @@ Ensure you have the following installed:
 ### Steps 1: **Clone the Repository**
 
 ```bash
-git clone https://github.com/QuackSquad/AND-WebApp.git
-cd AND-WebApp/frontend
+git clone https://github.com/andersdk26/AAUGuessr.git
+cd AAUGuessr/frontend
 ```
 
 ### Steps 2: **Install Frontend Dependencies**
@@ -48,19 +48,19 @@ yarn dev
 
 ### Steps 4: **Create Database and User**
 
-Create the database _AND-WebApp_ and the user \*AND-WebApp with all privileges
+Create the database _AAUGuessr_ and the user _AAUGuessr-WebApp_ with all privileges
 
 ```sql
-   CREATE DATABASE AND;
+   CREATE DATABASE AAUGuessr;
 
-   CREATE USER "AND-WebApp" WITH PASSWORD 'abcd1234';
+   CREATE USER "AAUGuessr-WebApp" WITH PASSWORD 'abcd1234';
 
-   GRANT ALL PRIVILEGES ON DATABASE "AND" TO "AND-WebApp";
+   GRANT ALL PRIVILEGES ON DATABASE "AAUGuessr" TO "AAUGuessr-WebApp";
 ```
 
 ### Steps 5: **Import tables**
 
-Import tables from backup: _backend/database/AND.sql_
+Import tables from backup: _backend/database/AAUGuessr.sql_
 
 ### Steps 6: **Install Backend Dependencies**
 
