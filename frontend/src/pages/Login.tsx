@@ -38,7 +38,7 @@ function Login() {
                 <label>Email</label>
             </div>
             {/* Password */}
-            <div className="form-floating">
+            <div className="form-floating mb-3">
                 <input
                     type="password"
                     className="form-control"
@@ -46,9 +46,14 @@ function Login() {
                     placeholder="Password"
                 ></input>
                 <label>Password</label>
+                <div id="passwordHelpBlock" className="form-text">
+                    Your password must be 8-20 characters long, contain letters,
+                    numbers and special characters, and must not contain spaces
+                    or emoji.
+                </div>
             </div>
             {/* Confirm Password */}
-            <div className="form-floating">
+            <div className="form-floating mb-3">
                 <input
                     type="password"
                     className="form-control"
