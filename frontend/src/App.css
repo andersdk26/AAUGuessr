@@ -128,31 +128,9 @@ body {
     background: #555;
 }
 
-/* Device */
-.left-box {
-    background-color: lightblue;
-    height: 450px;
-    width: 100%; /* Fylder hele bredden på mindre skærme */
-}
-
-.right-box {
-    background-color: lightcoral;
-    height: 450px;
-    width: 100%;
-}
-
-@media (min-width: 992px) {
-    .left-box {
-        width: 450px;
-        flex-shrink: 0;
-    }
-    .right-box {
-        flex-grow: 1;
-    }
-}
-
-.left-box,
-.right-box {
-    text-align: center;
-    font-weight: bold;
+/* Account */
+.login-from {
+    margin: 0 auto;
+    padding: 20px;
+    max-width: 600px;
 }
