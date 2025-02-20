@@ -15,7 +15,12 @@ function Login() {
     return isAuthenticated ? (
         <Navigate to="/" />
     ) : signUp ? (
-        <form className="login-from position-absolute top-50 start-50 translate-middle container-sm border border-light rounded">
+        <form
+            className="login-from needs-validation position-absolute top-50 start-50 translate-middle container-sm border border-light rounded"
+            noValidate
+            method="post"
+            action="/signup"
+        >
             <h1 className="text-center">Sign up</h1>
             {/* Username */}
             <div className="form-floating mb-3">
@@ -30,7 +35,7 @@ function Login() {
             {/* Email */}
             <div className="form-floating mb-3">
                 <input
-                    type="text"
+                    type="email"
                     className="form-control"
                     id="floatingEmail"
                     placeholder="user@email.com"
@@ -74,31 +79,34 @@ function Login() {
                 <label className="form-check-label">Stay signed in</label>
             </div>
             {/* Submit and Log in buttons */}
-            <div className="d-flex justify-content-center">
-                <Button className="me-3" onClick={() => alert("hej")}>
-                    Submit
-                </Button>
-                <Button
-                    className="ms-3"
-                    onClick={() => setSignUp(false)}
-                    outline
-                >
-                    Log in
-                </Button>
-            </div>
+            <Button className="btn-lg" onClick={() => alert("hej")}>
+                Sign up
+            </Button>
+            <Button type="link" onClick={() => setSignUp(false)}>
+                or log in
+            </Button>
         </form>
     ) : (
-        <form className="login-from position-absolute top-50 start-50 translate-middle container-sm border border-light rounded">
+        <form
+            className="login-from needs-validation position-absolute top-50 start-50 translate-middle container-sm border border-light rounded"
+            noValidate
+            method="post"
+            action="/login"
+        >
             <h1 className="text-center">Log in</h1>
-            {/* Username or Email */}
+            {/* Email */}
             <div className="form-floating mb-3">
                 <input
-                    type="text"
+                    type="email"
                     className="form-control"
-                    id="floatingUsername"
-                    placeholder="username"
+                    id="floatingEmail"
+                    placeholder="email"
+                    required
                 ></input>
-                <label>Username or Email</label>
+                <label>Email</label>
+                <div className="invalid-feedback">
+                    Please provide a valid city.
+                </div>
             </div>
             {/* Password */}
             <div className="form-floating">
@@ -107,6 +115,7 @@ function Login() {
                     className="form-control"
                     id="floatingPassword"
                     placeholder="Password"
+                    required
                 ></input>
                 <label>Password</label>
             </div>
@@ -122,18 +131,12 @@ function Login() {
                 <label className="form-check-label">Stay signed in</label>
             </div>
             {/* Submit and Sign up buttons */}
-            <div className="d-flex justify-content-center">
-                <Button className="me-3" onClick={() => alert("hej")}>
-                    Submit
-                </Button>
-                <Button
-                    className="ms-3"
-                    onClick={() => setSignUp(true)}
-                    outline
-                >
-                    Sign up
-                </Button>
-            </div>
+            <Button className="btn-lg" formType="submit" onClick={() => void 0}>
+                Log in
+            </Button>
+            <Button type="link" onClick={() => setSignUp(true)}>
+                or sign up
+            </Button>
         </form>
     );
 }
