@@ -17,7 +17,7 @@ use rocket::fairing::AdHoc;
 // Default route
 #[get("/")]
 async fn index(_db: Connection<AagDb>) -> &'static str {
-    "Successfully connected to PostgreSQL database 'AND'!"
+    "Successfully connected to PostgreSQL database 'AAUGuessr'!"
 }
 
 // Return a JSON response with the name provided in the URL, route
@@ -33,7 +33,7 @@ fn hello(name: &str) -> Json<DefaultResponse> {
 fn create_cors() -> Cors {
     CorsOptions {
         allowed_origins: AllowedOrigins::all(), // Allow all origins (can be restricted to a list of allowed origins)
-        allowed_methods: vec!["Get".parse().unwrap(), "POST".parse().unwrap()]
+        allowed_methods: vec!["Get".parse().unwrap(), "Post".parse().unwrap()]
             .into_iter()
             .collect(),
         allowed_headers: rocket_cors::AllowedHeaders::all(),

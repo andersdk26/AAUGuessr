@@ -21,7 +21,9 @@ function Bootstrap() {
     const [showResetAlert, setShowResetAlert] = useState(false);
     const [showModal, setShowModal] = useState(false);
     const [progress, setProgress] = useState(0);
-    const intervalRef = useRef<number | undefined>(undefined);
+    const intervalRef = useRef<ReturnType<typeof setInterval> | undefined>(
+        undefined
+    );
     const list = ["Item 1", "Item 2", "Item 3"];
     const { tab } = useParams();
     console.log(tab);

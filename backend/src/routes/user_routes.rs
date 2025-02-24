@@ -1,10 +1,16 @@
 use crate::db::connection::AagDb;
 use crate::models::user_schema::UsersTable;
+use crate::models::user_schema::UsersTableLoginInput;
 use crate::structures::default::DefaultResponse;
 use rocket::serde::json::Json;
 use rocket::{get, routes, Route};
 use rocket_db_pools::{sqlx, Connection};
 use sqlx::Row;
+use regex::Regex;
+
+// Hashing
+use argon2::{Argon2, PasswordHasher, PasswordHash, Params, Algorithm, Version};
+use password_hash::{SaltString, rand_core::OsRng, PasswordVerifier};
 
 #[get("/user/<id>")]
 async fn read_user(mut db: Connection<AagDb>, id: i64) -> Option<Json<UsersTable>> {
@@ -52,6 +58,109 @@ async fn set_username(
     }
 }
 
+#[post("/user/login", format = "json", data = "<user>")]
+async fn login_user(mut db: Connection<AagDb>, user: Json<UsersTableLoginInput>) -> Option<Json<DefaultResponse>> {
+    let invalid_value_response = Some(Json(DefaultResponse {
+        message: "Incorrect email or password".to_string(),
+        status: "failed".to_string(),
+    }));
+
+    // Validate email and password
+    if !{verify_email(&user.email)} {
+        return invalid_value_response;
+    }
+    if !{verify_password_strength(&user.password)} {
+        return invalid_value_response;
+    }
+
+    // Find user in database by email
+    let result = sqlx::query("SELECT * FROM \"user\".\"Users\" WHERE email = $1")
+        .bind(&user.email)
+        .fetch_one(&mut **db)
+        .await;
+
+    match result {
+    Ok(row) => {
+        match row.try_get::<String, _>("password") {
+            Ok(hashed_password) => {
+                if verify_password(&user.password, &hashed_password.trim_end()) {
+                    Some(Json(DefaultResponse {
+                        message: "Logged in successfully".to_string(),
+                        status: "success".to_string(),
+                    }))
+                } else {
+                    invalid_value_response
+                }
+            }
+            Err(e) => {
+                let message = format!("Failed to retrieve password: {}", e);
+                Some(Json(DefaultResponse {
+                    message,
+                    status: "failed".to_string(),
+                }))
+            }
+        }
+    }
+    Err(e) => {
+        let message = format!("Failed to fetch login {}: {}", &user.email, e);
+        Some(Json(DefaultResponse {
+            message,
+            status: "failed".to_string(),
+        }))
+    }
+}
+}
+
+#[post("/user/create"/*, data = "<user>"*/)]
+async fn create_user(/*mut db: Connection<AagDb>, user: Json<UsersTableLoginInput>*/) -> Option<Json<DefaultResponse>> {
+    hash_password("password");
+    Some(Json(DefaultResponse {
+                        message: "Incorrect password".to_string(),
+                        status: "failed".to_string(),
+                    }))
+}
+
+fn hash_password(password: &str) -> String {
+    // Generate salt
+    let salt = SaltString::generate(&mut OsRng);
+
+    // Set argon2 parameters
+    let params = Params::new(32 * 1024, 3, 1, None).unwrap(); // 32KiB memory, 3 iterations, 1 parallelism
+    let argon2 = Argon2::new(Algorithm::Argon2id, Version::V0x13, params);
+
+    // Hash password
+    let hashed_password = argon2
+        .hash_password(password.as_bytes(), &salt)
+        .unwrap()
+        .to_string();
+    hashed_password
+}
+
+fn verify_password(password: &str, hashed_password: &str) -> bool {
+    // Parse hashed password
+    let parsed_hash = PasswordHash::new(hashed_password).unwrap();
+    
+    // Set argon2 parameters
+    let argon2 = Argon2::new(Algorithm::Argon2id, Version::V0x13, Params::default());
+    
+    // Verify password
+    argon2.verify_password(password.as_bytes(), &parsed_hash).is_ok()
+}
+
+fn verify_email(email: &str) -> bool {
+    let email_regex = Regex::new(r"^[\w\.-]+@([\w-]+\.)+[\w-]{2,4}$").unwrap();
+    email_regex.is_match(email)
+}
+
+fn verify_password_strength(password: &str) -> bool {
+    let has_letter = password.chars().any(|c| c.is_alphabetic());
+    let has_digit = password.chars().any(|c| c.is_digit(10));
+    let has_special = password.chars().any(|c| "!@#$%^&*()_+-=[]{}|;':,.<>?/".contains(c));
+    let is_correct_length = (8..=32).contains(&password.len());
+
+    has_letter && has_digit && has_special && is_correct_length
+}
+
 pub fn get_routes() -> Vec<Route> {
-    routes![read_user, set_username]
+    routes![read_user, set_username, login_user, create_user]
 }
