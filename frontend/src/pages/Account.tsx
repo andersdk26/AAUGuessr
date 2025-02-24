@@ -1,5 +1,6 @@
 import { Navigate } from "react-router-dom";
 import "../App.css";
+import Button from "../components/Button";
 
 /**
  * Account page
@@ -13,6 +14,14 @@ function Account() {
     ) : (
         <>
             <h1>Account</h1>
+            <Button
+                onClick={() => {
+                    localStorage.removeItem("userToken");
+                    window.location.reload();
+                }}
+            >
+                Log out
+            </Button>
         </>
     );
 }
