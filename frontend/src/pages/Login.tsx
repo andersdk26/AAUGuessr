@@ -17,11 +17,10 @@ function Login() {
     ) : signUp ? (
         <form
             className="login-from needs-validation position-absolute top-50 start-50 translate-middle container-sm border border-light rounded"
-            noValidate
-            method="post"
+            method="get"
             action="/signup"
         >
-            <h1 className="text-center">Sign up</h1>
+            <h1 className="text-center mb-4">Sign up</h1>
             {/* Username */}
             <div className="form-floating mb-3">
                 <input
@@ -29,6 +28,7 @@ function Login() {
                     className="form-control"
                     id="floatingUsername"
                     placeholder="username"
+                    required
                 ></input>
                 <label>Username</label>
             </div>
@@ -39,6 +39,7 @@ function Login() {
                     className="form-control"
                     id="floatingEmail"
                     placeholder="user@email.com"
+                    required
                 ></input>
                 <label>Email</label>
             </div>
@@ -48,7 +49,8 @@ function Login() {
                     type="password"
                     className="form-control"
                     id="floatingPassword"
-                    placeholder="Password"
+                    placeholder="password"
+                    required
                 ></input>
                 <label>Password</label>
                 <div id="passwordHelpBlock" className="form-text">
@@ -63,7 +65,8 @@ function Login() {
                     type="password"
                     className="form-control"
                     id="floatingConfirmPassword"
-                    placeholder="ConfirmPassword"
+                    placeholder="password"
+                    required
                 ></input>
                 <label>Confirm Password</label>
             </div>
@@ -73,27 +76,34 @@ function Login() {
                     type="checkbox"
                     className="form-check-input"
                     id="staySignedIn"
-                    checked={staySignedIn}
-                    onClick={() => setStaySignedIn(!staySignedIn)}
+                    defaultChecked={staySignedIn}
+                    onChange={() => setStaySignedIn(!staySignedIn)}
                 ></input>
                 <label className="form-check-label">Stay signed in</label>
             </div>
             {/* Submit and Log in buttons */}
-            <Button className="btn-lg" onClick={() => alert("hej")}>
+            <Button
+                className="btn-lg container-fluid"
+                formType="submit"
+                onClick={() => void 0}
+            >
                 Sign up
             </Button>
-            <Button type="link" onClick={() => setSignUp(false)}>
-                or log in
+            <Button
+                className="container-fluid"
+                type="link"
+                onClick={() => setSignUp(false)}
+            >
+                or, log in
             </Button>
         </form>
     ) : (
         <form
             className="login-from needs-validation position-absolute top-50 start-50 translate-middle container-sm border border-light rounded"
-            noValidate
-            method="post"
+            method="get"
             action="/login"
         >
-            <h1 className="text-center">Log in</h1>
+            <h1 className="text-center mb-4">Log in</h1>
             {/* Email */}
             <div className="form-floating mb-3">
                 <input
@@ -105,7 +115,7 @@ function Login() {
                 ></input>
                 <label>Email</label>
                 <div className="invalid-feedback">
-                    Please provide a valid city.
+                    Please provide a valid email.
                 </div>
             </div>
             {/* Password */}
@@ -125,17 +135,25 @@ function Login() {
                     type="checkbox"
                     className="form-check-input"
                     id="staySignedIn"
-                    checked={staySignedIn}
-                    onClick={() => setStaySignedIn(!staySignedIn)}
+                    defaultChecked={staySignedIn}
+                    onChange={() => setStaySignedIn(!staySignedIn)}
                 ></input>
                 <label className="form-check-label">Stay signed in</label>
             </div>
             {/* Submit and Sign up buttons */}
-            <Button className="btn-lg" formType="submit" onClick={() => void 0}>
+            <Button
+                className="btn-lg container-fluid"
+                formType="submit"
+                onClick={() => void 0}
+            >
                 Log in
             </Button>
-            <Button type="link" onClick={() => setSignUp(true)}>
-                or sign up
+            <Button
+                className="container-fluid"
+                type="link"
+                onClick={() => setSignUp(true)}
+            >
+                or, sign up
             </Button>
         </form>
     );

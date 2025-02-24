@@ -7,7 +7,7 @@ import Home from "./pages/Home";
 import HttpTest from "./pages/HttpTest";
 import Bootstrap from "./pages/Bootstrap";
 import Account from "./pages/Account";
-import Login from "./pages/login";
+import Login from "./pages/Login";
 function App() {
     return (
         <>
