@@ -1,6 +1,7 @@
 use crate::db::connection::AagDb;
 use crate::models::user_schema::UsersTable;
 use crate::models::user_schema::UsersTableLoginInput;
+use crate::models::user_schema::UsersTableSignupInput;
 use crate::structures::default::DefaultResponse;
 use rocket::serde::json::Json;
 use rocket::{get, routes, Route};
@@ -111,13 +112,59 @@ async fn login_user(mut db: Connection<AagDb>, user: Json<UsersTableLoginInput>)
 }
 }
 
-#[post("/user/create"/*, data = "<user>"*/)]
-async fn create_user(/*mut db: Connection<AagDb>, user: Json<UsersTableLoginInput>*/) -> Option<Json<DefaultResponse>> {
-    hash_password("password");
-    Some(Json(DefaultResponse {
-                        message: "Incorrect password".to_string(),
-                        status: "failed".to_string(),
-                    }))
+#[post("/user/create", data = "<user>")]
+async fn create_user(mut db: Connection<AagDb>, user: Json<UsersTableSignupInput>) -> Option<Json<DefaultResponse>> {
+    let invalid_value_response = Some(Json(DefaultResponse {
+        message: "Incorrect email or password".to_string(),
+        status: "failed".to_string(),
+    }));
+
+    // Validate username, email and password
+    if !{verify_username(&user.username)} {
+        return invalid_value_response;
+    }
+    if !{verify_email(&user.email)} {
+        return invalid_value_response;
+    }
+    if !{verify_password_strength(&user.password)} {
+        return invalid_value_response;
+    }
+
+    let result = sqlx::query("SELECT COUNT(1) FROM \"user\".\"Users\" WHERE (email = $1 OR username = $2)")
+        .bind(&user.email)
+        .bind(&user.username)
+        .fetch_one(&mut **db)
+        .await;
+
+    match result {
+        Ok(row) => {
+            let count: i64 = row.try_get(0).unwrap_or_default();
+            if count > 0 {
+                return Some(Json(DefaultResponse {
+                    message: "User already exists".to_string(),
+                    status: "failed".to_string(),
+                }));
+            }
+        }
+        Err(e) => {
+            let message = format!("Failed to check if user exists: {}", e);
+            return Some(Json(DefaultResponse {
+                message,
+                status: "failed".to_string(),
+            }));
+        }
+    }
+
+    let hashed_password = hash_password(&user.password);
+
+    let result = sqlx::query("INSERT INTO \"user\".\"Users\" (username, email, password) VALUES ($1, $2, $3)")
+        .bind(&user.username)
+        .bind(&user.email)
+        .bind(&hashed_password)
+        .execute(&mut **db)
+        .await;
+
+    return invalid_value_response;
 }
 
 fn hash_password(password: &str) -> String {
@@ -145,6 +192,11 @@ fn verify_password(password: &str, hashed_password: &str) -> bool {
     
     // Verify password
     argon2.verify_password(password.as_bytes(), &parsed_hash).is_ok()
+}
+
+fn verify_username(username: &str) -> bool {
+    let username_regex = Regex::new(r"^[a-zA-Z0-9_-]{4,20}$").unwrap();
+    username_regex.is_match(username)
 }
 
 fn verify_email(email: &str) -> bool {

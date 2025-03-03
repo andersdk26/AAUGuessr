@@ -26,6 +26,7 @@ function Login() {
     const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
 
+        // Get user input
         const email = (e.target as HTMLFormElement).elements.namedItem(
             "floatingEmail"
         ) as HTMLInputElement;
@@ -39,18 +40,19 @@ function Login() {
             `Email: ${email.value}, Password: ${password.value}, Stay signed in: ${staySignedIn.checked}`
         );
 
+        // Validate user input
         if (!validateEmail(email.value)) {
             console.error("Invalid email.");
             alert("Invalid email or password");
             return;
         }
-
         if (!validatePasswordBool(password.value)) {
             console.error("Invalid password.");
             alert("Invalid email or password");
-            // return;
+            return;
         }
 
+        // Send user input to server
         const response = await fetch("http://localhost:8000/user/login", {
             method: "POST",
             headers: {
@@ -62,8 +64,15 @@ function Login() {
             }),
         });
 
-        if (response.ok) {
+        // Handle server response
+        if (response.ok && response.status === 200) {
             const data = await response.json();
+
+            if (data.status !== "success") {
+                alert("Invalid email or password");
+                return;
+            }
+
             console.log(data);
             localStorage.setItem("userToken", data.token);
             <Navigate to="/" />;
@@ -75,6 +84,7 @@ function Login() {
     const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
 
+        // Get user input
         const username = (e.target as HTMLFormElement).elements.namedItem(
             "floatingUsername"
         ) as HTMLInputElement;
@@ -94,6 +104,7 @@ function Login() {
             `Username: ${username.value}, Email: ${email.value}, Password: ${password.value}, Confirm Password: ${confirmPassword.value}, Stay signed in: ${staySignedIn.checked}`
         );
 
+        // Validate user input
         if (!validateUsername(username.value)) {
             console.error("Invalid username.");
             alert("Invalid username");
@@ -114,8 +125,37 @@ function Login() {
             alert("Invalid password");
             return;
         }
+
+        // Send user input to server
+        const response = await fetch("http://localhost:8000/user/login", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                email: email.value,
+                password: password.value,
+            }),
+        });
+
+        // Handle server response
+        if (response.ok && response.status === 200) {
+            const data = await response.json();
+
+            if (data.status !== "success") {
+                alert("Invalid email or password");
+                return;
+            }
+
+            console.log(data);
+            localStorage.setItem("userToken", data.token);
+            <Navigate to="/" />;
+        } else {
+            console.error("Failed to log in.");
+        }
     };
 
+    // Helper functions
     const validateEmail = (email: string) => {
         const re = /^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/;
         return re.test(email);
@@ -159,9 +199,9 @@ function Login() {
         alertTimeout = setTimeout(() => setShowAlert(false), 5000);
     };
 
-    return isAuthenticated ? (
+    return isAuthenticated ? ( // If user is already authenticated, redirect to home page
         <Navigate to="/" />
-    ) : signUp ? (
+    ) : signUp ? ( // If user is not authenticated, show log-in/sign-up page
         <form
             className="login-from needs-validation position-absolute top-50 start-50 translate-middle container-sm border border-light rounded"
             onSubmit={handleSignUp}
