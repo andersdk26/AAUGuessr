@@ -22,6 +22,7 @@ function Login() {
         special: false,
     });
     const [passwordFilledOut, setPasswordFilledOut] = useState(false);
+    const [passwordsMatch, setPasswordsMatch] = useState(true);
 
     const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -127,12 +128,13 @@ function Login() {
         }
 
         // Send user input to server
-        const response = await fetch("http://localhost:8000/user/login", {
+        const response = await fetch("http://localhost:8000/user/create", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
             },
             body: JSON.stringify({
+                username: username.value,
                 email: email.value,
                 password: password.value,
             }),
@@ -152,6 +154,24 @@ function Login() {
             <Navigate to="/" />;
         } else {
             console.error("Failed to log in.");
+        }
+    };
+
+    const passwordMatchHandler = () => {
+        const password = (
+            document.getElementById("floatingPassword") as HTMLInputElement
+        ).value;
+        const confirmPassword = (
+            document.getElementById(
+                "floatingConfirmPassword"
+            ) as HTMLInputElement
+        ).value;
+
+        if (password === confirmPassword || confirmPassword === "") {
+            // If the password is empty, don't show the error message
+            setPasswordsMatch(true);
+        } else {
+            setPasswordsMatch(false);
         }
     };
 
@@ -218,6 +238,7 @@ function Login() {
                     type="text"
                     className="form-control"
                     id="floatingUsername"
+                    key={"floatingUsername"}
                     placeholder="username"
                     required
                 ></input>
@@ -229,6 +250,7 @@ function Login() {
                     type="email"
                     className="form-control"
                     id="floatingEmail"
+                    key={"floatingEmail"}
                     placeholder="user@email.com"
                     required
                 ></input>
@@ -240,6 +262,7 @@ function Login() {
                     type="password"
                     className="form-control"
                     id="floatingPassword"
+                    key={"floatingPassword"}
                     placeholder="password"
                     required
                     onChange={() => {
@@ -250,6 +273,7 @@ function Login() {
                         ).value;
                         setPasswordFilledOut(password.length > 0);
                         setPasswordHelpBlock(validatePasswordObject(password));
+                        passwordMatchHandler();
                     }}
                 ></input>
                 <label>Password</label>
@@ -292,22 +316,34 @@ function Login() {
                 </div>
             </div>
             {/* Confirm Password */}
-            <div className="form-floating mb-3">
+            <div className="form-floating mb-1">
                 <input
                     type="password"
                     className="form-control"
                     id="floatingConfirmPassword"
+                    key={"floatingConfirmPassword"}
                     placeholder="password"
                     required
+                    onChange={() => {
+                        passwordMatchHandler();
+                    }}
                 ></input>
                 <label>Confirm Password</label>
             </div>
+
+            <div className="form-text" style={{ height: "20px" }}>
+                {!passwordsMatch && (
+                    <p className="text-danger mb-3">Passwords must match</p>
+                )}
+            </div>
+
             {/* Stay signed in */}
             <div className="mb-3 form-check mt-2">
                 <input
                     type="checkbox"
                     className="form-check-input"
                     id="staySignedIn"
+                    key={"staySignedIn"}
                     defaultChecked={staySignedIn}
                     onChange={() => setStaySignedIn(!staySignedIn)}
                 ></input>
@@ -346,6 +382,7 @@ function Login() {
                     type="email"
                     className="form-control"
                     id="floatingEmail"
+                    key={"floatingEmail"}
                     placeholder="email"
                     required
                 ></input>
@@ -360,6 +397,7 @@ function Login() {
                     type="password"
                     className="form-control"
                     id="floatingPassword"
+                    key={"floatingPassword"}
                     placeholder="Password"
                     required
                 ></input>

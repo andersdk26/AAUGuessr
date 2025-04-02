@@ -1,3 +1,4 @@
+use rand::Rng;
 use crate::db::connection::AagDb;
 use crate::models::user_schema::UsersTable;
 use crate::models::user_schema::UsersTableLoginInput;
@@ -130,6 +131,7 @@ async fn create_user(mut db: Connection<AagDb>, user: Json<UsersTableSignupInput
         return invalid_value_response;
     }
 
+    // Check if user already exists by email or username
     let result = sqlx::query("SELECT COUNT(1) FROM \"user\".\"Users\" WHERE (email = $1 OR username = $2)")
         .bind(&user.email)
         .bind(&user.username)
@@ -157,14 +159,46 @@ async fn create_user(mut db: Connection<AagDb>, user: Json<UsersTableSignupInput
 
     let hashed_password = hash_password(&user.password);
 
-    let result = sqlx::query("INSERT INTO \"user\".\"Users\" (username, email, password) VALUES ($1, $2, $3)")
+    for _i in 0..10 {
+        // Generate a unique user ID
+        let user_id = rand::rng().random_range(1_000_000_000..10_000_000_000);
+
+        // Check if the user ID already exists in the database
+        let result2 = sqlx::query("INSERT INTO \"user\".\"Users\" (id, username, email, password) VALUES ($1, $2, $3, $4) RETURNING id")
+        .bind(&user_id)
         .bind(&user.username)
         .bind(&user.email)
         .bind(&hashed_password)
-        .execute(&mut **db)
+        .fetch_one(&mut **db)
         .await;
 
-    return invalid_value_response;
+        match result2 {
+            Ok(row) => {
+                if row.is_empty() {
+                    continue;
+                }
+                let token = generate_token(user_id).await;
+
+                return Some(Json(DefaultResponse {
+                    message: format!("\"token\": \"{}\"", token),
+                    status: "success".to_string(),
+                }));
+            }
+            Err(e) => {
+                let message = format!("Failed to create user: {}", e);
+                return Some(Json(DefaultResponse {
+                    message,
+                    status: "failed".to_string(),
+                }));
+            }
+        }
+    }
+
+    return Some(Json(DefaultResponse {
+        message: "Failed to create user".to_string(),
+        status: "failed".to_string(),
+    }))
+    
 }
 
 fn hash_password(password: &str) -> String {
@@ -211,6 +245,11 @@ fn verify_password_strength(password: &str) -> bool {
     let is_correct_length = (8..=32).contains(&password.len());
 
     has_letter && has_digit && has_special && is_correct_length
+}
+
+async fn generate_token(user_id: i64) -> String {
+    // ToDd: Implement token generation logic
+    return user_id.to_string();
 }
 
 pub fn get_routes() -> Vec<Route> {

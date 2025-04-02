@@ -13,3 +13,4 @@ tokio = { version = "1", features = ["full"] }
 argon2 = "0.5.3"
 password-hash = "0.5"
 regex = "1.11.1"
+rand = "0.9.0"
