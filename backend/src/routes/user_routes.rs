@@ -24,11 +24,11 @@ async fn read_user(mut db: Connection<AagDb>, id: i64) -> Option<Json<UsersTable
     match row {
         Ok(r) => {
             let username: String = r.try_get("username").unwrap_or_default();
-            Some(Json(UsersTable { id, username }))
+            Some(Json(UsersTable { id, username, email: String::new(), password: String::new() }))
         }
         Err(e) => {
             let username = format!("Failed to fetch log with ID {}: {}", id, e);
-            Some(Json(UsersTable { id, username }))
+            Some(Json(UsersTable { id, username, email: String::new(), password: String::new() }))
         }
     }
 }
