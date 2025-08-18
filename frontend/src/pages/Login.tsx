@@ -71,7 +71,7 @@ function Login() {
 
             console.log(data);
             localStorage.setItem("accessToken", data.token);
-            <Navigate to="/" />;
+            window.location.href = "/";
         } else if (response.status === 403) {
             alert("Invalid email or password");
         } else if (response.status === 500) {
@@ -141,7 +141,7 @@ function Login() {
 
             console.log(data);
             localStorage.setItem("accessToken", data.token);
-            <Navigate to="/" />;
+            window.location.href = "/";
         } else if (response.status === 403) {
             alert("Invalid credentials");
         } else if (response.status === 409) {
