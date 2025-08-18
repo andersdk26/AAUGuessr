@@ -1,16 +1,18 @@
 use rand::Rng;
 use rocket::http::Status;
+use rocket::time::Duration;
 use crate::db::connection::AagDb;
 use crate::models::user_schema::UsersTableNonsens;
 use crate::models::user_schema::UsersTableLoginInput;
 use crate::models::user_schema::UsersTableSignupInput;
-use crate::structures::default::DefaultResponse;
+use crate::structures::user_structures::LoginResponse;
 use rocket::serde::json::Json;
 use rocket::{get, routes, Route};
 use rocket_db_pools::{sqlx, Connection};
 use sqlx::Row;
 use regex::Regex;
 use crate::server_error_handling::log_error;
+use rocket::http::{Cookie, CookieJar, SameSite};
 
 // Hashing
 use argon2::{Argon2, PasswordHasher, PasswordHash, Params, Algorithm, Version};
@@ -61,7 +63,7 @@ async fn set_username(
 }
 
 #[post("/user/login", format = "json", data = "<user>")]
-async fn login_user(mut db: Connection<AagDb>, user: Json<UsersTableLoginInput>) -> Result<Json<DefaultResponse>, Status> {
+async fn login_user(mut db: Connection<AagDb>, jar: &CookieJar<'_>, user: Json<UsersTableLoginInput>) -> Result<Json<LoginResponse>, Status> {
     // Validate email and password
     if !{verify_email(&user.email)} {
         return Err(Status::Forbidden)
@@ -77,34 +79,49 @@ async fn login_user(mut db: Connection<AagDb>, user: Json<UsersTableLoginInput>)
         .await;
 
     match result {
-    Ok(row) => {
-        match row.try_get::<String, _>("password") {
-            Ok(hashed_password) => {
-                // Verify password
-                if verify_password(&user.password, &hashed_password.trim_end()) {
-                    Ok(Json(DefaultResponse {
-                        message: "Logged in successfully".to_string(),
-                        status: "success".to_string(),
-                    }))
-                } else {
-                    Err(Status::Forbidden)
+        Ok(row) => {
+            match row.try_get::<String, _>("password") {
+                Ok(hashed_password) => {
+                    // Verify password
+                    if verify_password(&user.password, &hashed_password.trim_end()) {
+                        match row.try_get::<i64, _>("id") {
+                            Ok(user_id) => {
+                                // Successfully logged in
+                                let access_token = generate_access_token(user_id).await;
+                                let refresh_token = generate_refresh_token(user_id).await;
+
+                                set_refresh_cookie(jar, refresh_token);
+
+                                return Ok(Json(LoginResponse {
+                                    access_token,
+                                }));
+                            }
+                            Err(e) => {
+                                log_error(db, 0, &format!("Failed to retrieve user ID: {}", e)).await;
+                                return Err(Status::InternalServerError);
+                            }
+                            
+                        }
+                        
+                    } else {
+                        Err(Status::Forbidden)
+                    }
+                }
+                Err(e) => {
+                    log_error(db, 0, &format!("Failed to retrieve password: {}", e)).await;
+                    Err(Status::InternalServerError)
                 }
             }
-            Err(e) => {
-                log_error(db, 0, &format!("Failed to retrieve password: {}", e)).await;
-                Err(Status::InternalServerError)
-            }
+        }
+        Err(e) => {
+            log_error(db, 0, &format!("Failed to fetch login {}: {}", &user.email, e)).await;
+            Err(Status::InternalServerError)
         }
     }
-    Err(e) => {
-        log_error(db, 0, &format!("Failed to fetch login {}: {}", &user.email, e)).await;
-        Err(Status::InternalServerError)
-    }
-}
 }
 
 #[post("/user/create", data = "<user>")]
-async fn create_user(mut db: Connection<AagDb>, user: Json<UsersTableSignupInput>) -> Result<Json<DefaultResponse>, Status> {
+async fn create_user(mut db: Connection<AagDb>, jar: &CookieJar<'_>, user: Json<UsersTableSignupInput>) -> Result<Json<LoginResponse>, Status> {
     // Validate username, email and password
     if !{verify_username(&user.username)} {
         return Err(Status::Forbidden);
@@ -156,11 +173,13 @@ async fn create_user(mut db: Connection<AagDb>, user: Json<UsersTableSignupInput
                 if row.is_empty() {
                     continue;
                 }
-                let token = generate_token(user_id).await;
+                let access_token = generate_access_token(user_id).await;
+                let refresh_token = generate_refresh_token(user_id).await;
 
-                return Ok(Json(DefaultResponse {
-                    message: format!("\"token\": \"{}\"", token),
-                    status: "success".to_string(),
+                set_refresh_cookie(jar, refresh_token);
+
+                return Ok(Json(LoginResponse {
+                    access_token,
                 }));
             }
             Err(e) => {
@@ -221,9 +240,26 @@ fn verify_password_strength(password: &str) -> bool {
     has_letter && has_digit && has_special && is_correct_length
 }
 
-async fn generate_token(user_id: i64) -> String {
+async fn generate_access_token(user_id: i64) -> String {
     // ToDo: Implement token generation logic
     return user_id.to_string();
+}
+
+async fn generate_refresh_token(user_id: i64) -> String {
+    // ToDo: Implement token generation logic
+    return user_id.to_string();
+}
+
+fn set_refresh_cookie(jar: &CookieJar<'_>, refresh_token: String) {
+    let cookie = Cookie::build(("refreshToken", refresh_token))
+        .http_only(true)
+        .secure(true) // requires HTTPS
+        .same_site(SameSite::Lax)
+        .path("/")
+        .max_age(Duration::days(7))
+        .build();
+
+    jar.add(cookie);
 }
 
 pub fn get_routes() -> Vec<Route> {
