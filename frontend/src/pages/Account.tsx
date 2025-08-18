@@ -1,4 +1,3 @@
-import { Navigate } from "react-router-dom";
 import "../App.css";
 import Button from "../components/Button";
 
@@ -7,16 +6,11 @@ import Button from "../components/Button";
  * @returns Account page
  */
 function Account() {
-    const isAuthenticated = !!localStorage.getItem("accessToken");
-
-    return !isAuthenticated ? (
-        <Navigate to="/login" />
-    ) : (
+    return (
         <>
             <h1>Account</h1>
             <Button
                 onClick={() => {
-                    localStorage.removeItem("accessToken");
                     window.location.reload();
                 }}
             >

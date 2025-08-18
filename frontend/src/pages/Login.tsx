@@ -1,15 +1,15 @@
 import { Navigate } from "react-router-dom";
 import "../App.css";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Button from "../components/Button";
 import Alert from "../components/Alert";
+import useAuth from "../components/authentication/useAuth";
 
 /**
  * Log-in/sign up page
  * @returns Log-in/sign-up page
  */
 function Login() {
-    const isAuthenticated = !!localStorage.getItem("accessToken");
     const [signUp, setSignUp] = useState(false);
     const [staySignedIn, setStaySignedIn] = useState(true);
     const [showAlert, setShowAlert] = useState(false);
@@ -23,6 +23,11 @@ function Login() {
     });
     const [passwordFilledOut, setPasswordFilledOut] = useState(false);
     const [passwordsMatch, setPasswordsMatch] = useState(true);
+    const { accessToken, setAccessToken } = useAuth();
+
+    useEffect(() => {
+        console.log("ProtectedRoute accessToken:", accessToken);
+    }, [accessToken]);
 
     const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -70,8 +75,9 @@ function Login() {
             const data = await response.json();
 
             console.log(data);
-            localStorage.setItem("accessToken", data.token);
-            window.location.href = "/";
+            setAccessToken(data.access_token);
+
+            <Navigate to="/" />;
         } else if (response.status === 403) {
             alert("Invalid email or password");
         } else if (response.status === 500) {
@@ -140,8 +146,9 @@ function Login() {
             const data = await response.json();
 
             console.log(data);
-            localStorage.setItem("accessToken", data.token);
-            window.location.href = "/";
+            setAccessToken(data.access_token);
+
+            <Navigate to="/" />;
         } else if (response.status === 403) {
             alert("Invalid credentials");
         } else if (response.status === 409) {
@@ -215,7 +222,7 @@ function Login() {
         alertTimeout = setTimeout(() => setShowAlert(false), 5000);
     };
 
-    return isAuthenticated ? ( // If user is already authenticated, redirect to home page
+    return accessToken ? ( // If user is already authenticated, redirect to home page
         <Navigate to="/" />
     ) : signUp ? ( // If user is not authenticated, show log-in/sign-up page
         <form

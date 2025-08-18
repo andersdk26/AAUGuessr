@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import pageList from "./pages/pagesList";
 import NavBar from "./components/NavBar";
+import ProtectedRoute from "./components/authentication/ProtectedRoute";
 
 // Pages
 import Home from "./pages/Home";
@@ -8,11 +9,20 @@ import HttpTest from "./pages/HttpTest";
 import Bootstrap from "./pages/Bootstrap";
 import Account from "./pages/Account";
 import Login from "./pages/Login";
+import { useEffect } from "react";
+import useAuth from "./components/authentication/useAuth";
+
 function App() {
+    const { accessToken } = useAuth();
+
+    useEffect(() => {
+        console.log("ProtectedRoute accessToken:", accessToken);
+    }, [accessToken]);
+
     return (
         <>
-            <NavBar pages={pageList} title="AAUGuessr" />
             <BrowserRouter>
+                <NavBar pages={pageList} title="AAUGuessr" />
                 <Routes>
                     {/* Default routes */}
                     <Route path="/" element={<Home />} />
@@ -27,7 +37,14 @@ function App() {
                         element={<Navigate to="/bootstrap/overview" />}
                     />
                     {/* Account routes */}
-                    <Route path="/account" element={<Account />} />
+                    <Route
+                        path="/account"
+                        element={
+                            <ProtectedRoute>
+                                <Account />
+                            </ProtectedRoute>
+                        }
+                    />
                     <Route path="/login" element={<Login />} />
                 </Routes>
             </BrowserRouter>

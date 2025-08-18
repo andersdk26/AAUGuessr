@@ -2,6 +2,7 @@ import { useState } from "react";
 import BSTheme from "./BSTheme";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBars, faUser } from "@fortawesome/free-solid-svg-icons";
+import { Link, useNavigate } from "react-router-dom";
 
 interface NavBarProps {
     title: string;
@@ -33,15 +34,16 @@ interface NavBarProps {
 function NavBar({ title, pages }: NavBarProps) {
     const [hamburgerShown, setHamburgerShown] = useState(false);
     const [hamburgerAnimation, setHamburgerAnimation] = useState(false);
+    const navigate = useNavigate();
 
     return (
         // NavBar breakpoint setting: -sm|-md|-lg|-xl|-xxl
         <nav className="navbar bg-body-tertiary fixed-top navbar-expand-md">
             <div className="container-fluid">
                 {/* Title */}
-                <a className="navbar-brand" href="/">
+                <Link className="navbar-brand" to="/">
                     {title}
-                </a>
+                </Link>
                 {/* Hamburger menu */}
                 <div
                     className={
@@ -84,16 +86,16 @@ function NavBar({ title, pages }: NavBarProps) {
                         <ul className="navbar-nav justify-content-start flex-grow-1 pe-3">
                             {pages.map(({ path, name, disabled }) => (
                                 <li className="nav-item" key={name}>
-                                    <a
+                                    <Link
                                         className={
                                             "nav-link " +
                                             (disabled ? "disabled" : "active")
                                         }
                                         aria-current="page"
-                                        href={path}
+                                        to={path}
                                     >
                                         {name}
-                                    </a>
+                                    </Link>
                                 </li>
                             ))}
                         </ul>
@@ -107,7 +109,7 @@ function NavBar({ title, pages }: NavBarProps) {
                         title="Account"
                         className="btn btn-outline-secondary navbar-button"
                         onClick={() => {
-                            window.location.href = "/account";
+                            navigate("/account");
                         }}
                     >
                         <FontAwesomeIcon icon={faUser} className="fa-lg" />
