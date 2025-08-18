@@ -10,6 +10,7 @@ export default function ProtectedRoute({ children }: Props) {
     const { accessToken } = useAuth();
     console.log("ProtectedRoute accessToken:", accessToken);
 
+    // If the user is not authenticated, redirect to the login page
     if (!accessToken) {
         return <Navigate to="/login" replace />;
     }

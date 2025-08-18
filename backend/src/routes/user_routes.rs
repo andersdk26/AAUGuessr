@@ -194,6 +194,21 @@ async fn create_user(mut db: Connection<AagDb>, jar: &CookieJar<'_>, user: Json<
     
 }
 
+#[post("/user/logout")]
+async fn logout_user(mut db: Connection<AagDb>, jar: &CookieJar<'_>) -> Result<Status, Status> {
+    // Clear the refresh token cookie
+    jar.remove(Cookie::from("refreshToken"));
+
+    // Check if the cookie was successfully removed
+    if jar.get("refreshToken").is_none() {
+        return Ok(Status::Ok);
+    } else {
+        log_error(db, 0, "Failed to clear refresh token cookie").await;
+        return Err(Status::InternalServerError);
+        
+    }
+}
+
 fn hash_password(password: &str) -> String {
     // Generate salt
     let salt = SaltString::generate(&mut OsRng);
@@ -263,5 +278,5 @@ fn set_refresh_cookie(jar: &CookieJar<'_>, refresh_token: String) {
 }
 
 pub fn get_routes() -> Vec<Route> {
-    routes![read_user, set_username, login_user, create_user]
+    routes![read_user, set_username, login_user, create_user, logout_user]
 }
