@@ -32,7 +32,7 @@ function HttpTest() {
             console.log(response.data);
             setHelloData(response.data.message);
         } catch (error) {
-            console.error("Error receiving helloData:", error);
+            console.error("Error receiving hello data:", error);
         }
     };
 
@@ -44,7 +44,8 @@ function HttpTest() {
             console.log(response.data);
             setUsername(response.data.username);
         } catch (error) {
-            console.error("Error receiving helloData:", error);
+            console.error("Error receiving user data:", error);
+            setUsername("");
         }
     };
 
@@ -61,17 +62,17 @@ function HttpTest() {
                     },
                 }
             );
-            console.log(response.data);
-            if (response.data.status === "success") {
+            if (response.status === 200) {
                 setUsername(newUsername);
-                setShowMessage("Username set successfully");
+                setShowMessage("Username changed successfully");
             } else {
-                setShowMessage("Username set failed" + response.data.message);
+                throw new Error(`code: ${response.status}`);
             }
-            setTimeout(setShowMessage, 2000, "");
         } catch (error) {
-            console.error("Error receiving helloData:", error);
+            console.error("Error receiving data:", error);
+            setShowMessage("Username change failed");
         }
+        setTimeout(setShowMessage, 2000, "");
     };
 
     useEffect(() => {

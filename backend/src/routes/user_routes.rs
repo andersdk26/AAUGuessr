@@ -1,6 +1,7 @@
 use rand::Rng;
+use rocket::http::Status;
 use crate::db::connection::AagDb;
-use crate::models::user_schema::UsersTable;
+use crate::models::user_schema::UsersTableNonsens;
 use crate::models::user_schema::UsersTableLoginInput;
 use crate::models::user_schema::UsersTableSignupInput;
 use crate::structures::default::DefaultResponse;
@@ -9,13 +10,14 @@ use rocket::{get, routes, Route};
 use rocket_db_pools::{sqlx, Connection};
 use sqlx::Row;
 use regex::Regex;
+use crate::server_error_handling::log_error;
 
 // Hashing
 use argon2::{Argon2, PasswordHasher, PasswordHash, Params, Algorithm, Version};
 use password_hash::{SaltString, rand_core::OsRng, PasswordVerifier};
 
 #[get("/user/<id>")]
-async fn read_user(mut db: Connection<AagDb>, id: i64) -> Option<Json<UsersTable>> {
+async fn read_user(mut db: Connection<AagDb>, id: i64) -> Result<Json<UsersTableNonsens>, Status> {
     let row = sqlx::query("SELECT username FROM \"user\".\"Users\" WHERE id = $1")
         .bind(id)
         .fetch_one(&mut **db)
@@ -23,12 +25,16 @@ async fn read_user(mut db: Connection<AagDb>, id: i64) -> Option<Json<UsersTable
 
     match row {
         Ok(r) => {
+            // Return non sensitive user information
             let username: String = r.try_get("username").unwrap_or_default();
-            Some(Json(UsersTable { id, username, email: String::new(), password: String::new() }))
+            Ok(Json(UsersTableNonsens { id, username }))
+        }
+        Err(sqlx::Error::RowNotFound) => {
+            Err(Status::NotFound)
         }
         Err(e) => {
-            let username = format!("Failed to fetch log with ID {}: {}", id, e);
-            Some(Json(UsersTable { id, username, email: String::new(), password: String::new() }))
+            log_error(db, id, &format!("Failed to fetch user with ID {}: {}", id, e)).await;
+            Err(Status::InternalServerError)
         }
     }
 }
@@ -38,7 +44,7 @@ async fn set_username(
     mut db: Connection<AagDb>,
     id: i64,
     set: &str,
-) -> Option<Json<DefaultResponse>> {
+) -> Result<Status, Status> {
     let result = sqlx::query("UPDATE \"user\".\"Users\" SET username = $1 WHERE id = $2")
         .bind(set)
         .bind(id)
@@ -46,33 +52,22 @@ async fn set_username(
         .await;
 
     match result {
-        Ok(_) => Some(Json(DefaultResponse {
-            message: "Username set successfully".to_string(),
-            status: "success".to_string(),
-        })),
+        Ok(_) => Ok(Status::Ok),
         Err(e) => {
-            let message = format!("Failed to fetch log with ID {}: {}", id, e);
-            Some(Json(DefaultResponse {
-                message: message,
-                status: "failed".to_string(),
-            }))
+            log_error(db, id, &format!("Failed to set username for user with ID {}: {}", id, e)).await;
+            Err(Status::InternalServerError)
         }
     }
 }
 
 #[post("/user/login", format = "json", data = "<user>")]
-async fn login_user(mut db: Connection<AagDb>, user: Json<UsersTableLoginInput>) -> Option<Json<DefaultResponse>> {
-    let invalid_value_response = Some(Json(DefaultResponse {
-        message: "Incorrect email or password".to_string(),
-        status: "failed".to_string(),
-    }));
-
+async fn login_user(mut db: Connection<AagDb>, user: Json<UsersTableLoginInput>) -> Result<Json<DefaultResponse>, Status> {
     // Validate email and password
     if !{verify_email(&user.email)} {
-        return invalid_value_response;
+        return Err(Status::Forbidden)
     }
     if !{verify_password_strength(&user.password)} {
-        return invalid_value_response;
+        return Err(Status::Forbidden)
     }
 
     // Find user in database by email
@@ -85,50 +80,40 @@ async fn login_user(mut db: Connection<AagDb>, user: Json<UsersTableLoginInput>)
     Ok(row) => {
         match row.try_get::<String, _>("password") {
             Ok(hashed_password) => {
+                // Verify password
                 if verify_password(&user.password, &hashed_password.trim_end()) {
-                    Some(Json(DefaultResponse {
+                    Ok(Json(DefaultResponse {
                         message: "Logged in successfully".to_string(),
                         status: "success".to_string(),
                     }))
                 } else {
-                    invalid_value_response
+                    Err(Status::Forbidden)
                 }
             }
             Err(e) => {
-                let message = format!("Failed to retrieve password: {}", e);
-                Some(Json(DefaultResponse {
-                    message,
-                    status: "failed".to_string(),
-                }))
+                log_error(db, 0, &format!("Failed to retrieve password: {}", e)).await;
+                Err(Status::InternalServerError)
             }
         }
     }
     Err(e) => {
-        let message = format!("Failed to fetch login {}: {}", &user.email, e);
-        Some(Json(DefaultResponse {
-            message,
-            status: "failed".to_string(),
-        }))
+        log_error(db, 0, &format!("Failed to fetch login {}: {}", &user.email, e)).await;
+        Err(Status::InternalServerError)
     }
 }
 }
 
 #[post("/user/create", data = "<user>")]
-async fn create_user(mut db: Connection<AagDb>, user: Json<UsersTableSignupInput>) -> Option<Json<DefaultResponse>> {
-    let invalid_value_response = Some(Json(DefaultResponse {
-        message: "Incorrect email or password".to_string(),
-        status: "failed".to_string(),
-    }));
-
+async fn create_user(mut db: Connection<AagDb>, user: Json<UsersTableSignupInput>) -> Result<Json<DefaultResponse>, Status> {
     // Validate username, email and password
     if !{verify_username(&user.username)} {
-        return invalid_value_response;
+        return Err(Status::Forbidden);
     }
     if !{verify_email(&user.email)} {
-        return invalid_value_response;
+        return Err(Status::Forbidden);
     }
     if !{verify_password_strength(&user.password)} {
-        return invalid_value_response;
+        return Err(Status::Forbidden);
     }
 
     // Check if user already exists by email or username
@@ -142,18 +127,12 @@ async fn create_user(mut db: Connection<AagDb>, user: Json<UsersTableSignupInput
         Ok(row) => {
             let count: i64 = row.try_get(0).unwrap_or_default();
             if count > 0 {
-                return Some(Json(DefaultResponse {
-                    message: "User already exists".to_string(),
-                    status: "failed".to_string(),
-                }));
+                return Err(Status::Conflict); // User already exists
             }
         }
         Err(e) => {
-            let message = format!("Failed to check if user exists: {}", e);
-            return Some(Json(DefaultResponse {
-                message,
-                status: "failed".to_string(),
-            }));
+            log_error(db, 0, &format!("Failed to check if user exists: {}", e)).await;
+            return Err(Status::InternalServerError);
         }
     }
 
@@ -179,25 +158,20 @@ async fn create_user(mut db: Connection<AagDb>, user: Json<UsersTableSignupInput
                 }
                 let token = generate_token(user_id).await;
 
-                return Some(Json(DefaultResponse {
+                return Ok(Json(DefaultResponse {
                     message: format!("\"token\": \"{}\"", token),
                     status: "success".to_string(),
                 }));
             }
             Err(e) => {
-                let message = format!("Failed to create user: {}", e);
-                return Some(Json(DefaultResponse {
-                    message,
-                    status: "failed".to_string(),
-                }));
+                log_error(db, 0, &format!("Failed to create user: {}", e)).await;
+                return Err(Status::InternalServerError);
             }
         }
     }
 
-    return Some(Json(DefaultResponse {
-        message: "Failed to create user".to_string(),
-        status: "failed".to_string(),
-    }))
+    log_error(db, 0, "Failed to create user: {}").await;
+    return Err(Status::InternalServerError);
     
 }
 
@@ -248,7 +222,7 @@ fn verify_password_strength(password: &str) -> bool {
 }
 
 async fn generate_token(user_id: i64) -> String {
-    // ToDd: Implement token generation logic
+    // ToDo: Implement token generation logic
     return user_id.to_string();
 }
 

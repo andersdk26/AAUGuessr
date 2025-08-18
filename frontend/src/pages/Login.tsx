@@ -9,7 +9,7 @@ import Alert from "../components/Alert";
  * @returns Log-in/sign-up page
  */
 function Login() {
-    const isAuthenticated = !!localStorage.getItem("userToken");
+    const isAuthenticated = !!localStorage.getItem("accessToken");
     const [signUp, setSignUp] = useState(false);
     const [staySignedIn, setStaySignedIn] = useState(true);
     const [showAlert, setShowAlert] = useState(false);
@@ -69,16 +69,15 @@ function Login() {
         if (response.ok && response.status === 200) {
             const data = await response.json();
 
-            if (data.status !== "success") {
-                alert("Invalid email or password");
-                return;
-            }
-
             console.log(data);
-            localStorage.setItem("userToken", data.token);
+            localStorage.setItem("accessToken", data.token);
             <Navigate to="/" />;
+        } else if (response.status === 403) {
+            alert("Invalid email or password");
+        } else if (response.status === 500) {
+            alert("Internal server error. Please try again later.");
         } else {
-            console.error("Failed to log in.");
+            alert("Failed to log in. Please try again later.");
         }
     };
 
@@ -107,22 +106,18 @@ function Login() {
 
         // Validate user input
         if (!validateUsername(username.value)) {
-            console.error("Invalid username.");
             alert("Invalid username");
             return;
         }
         if (!validateEmail(email.value)) {
-            console.error("Invalid email.");
             alert("Invalid email");
             return;
         }
         if (password.value !== confirmPassword.value) {
-            console.error("Passwords do not match.");
             alert("Passwords do not match");
             return;
         }
         if (!validatePasswordBool(password.value)) {
-            console.error("Invalid password.");
             alert("Invalid password");
             return;
         }
@@ -144,16 +139,17 @@ function Login() {
         if (response.ok && response.status === 200) {
             const data = await response.json();
 
-            if (data.status !== "success") {
-                alert("Invalid email or password");
-                return;
-            }
-
             console.log(data);
-            localStorage.setItem("userToken", data.token);
+            localStorage.setItem("accessToken", data.token);
             <Navigate to="/" />;
+        } else if (response.status === 403) {
+            alert("Invalid credentials");
+        } else if (response.status === 409) {
+            alert("User already exists with that email or username");
+        } else if (response.status === 500) {
+            alert("Internal server error. Please try again later.");
         } else {
-            console.error("Failed to log in.");
+            alert("Failed to sign up. Please try again later.");
         }
     };
 

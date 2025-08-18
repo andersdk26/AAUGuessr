@@ -7,7 +7,7 @@ import Button from "../components/Button";
  * @returns Account page
  */
 function Account() {
-    const isAuthenticated = !!localStorage.getItem("userToken");
+    const isAuthenticated = !!localStorage.getItem("accessToken");
 
     return !isAuthenticated ? (
         <Navigate to="/login" />
@@ -16,7 +16,7 @@ function Account() {
             <h1>Account</h1>
             <Button
                 onClick={() => {
-                    localStorage.removeItem("userToken");
+                    localStorage.removeItem("accessToken");
                     window.location.reload();
                 }}
             >
