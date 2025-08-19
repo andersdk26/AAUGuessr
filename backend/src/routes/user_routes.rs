@@ -206,11 +206,15 @@ async fn logout_user(mut db: Connection<AagDb>, jar: &CookieJar<'_>, ip: ClientI
         .map(|cookie| cookie.value().to_string())
         .unwrap_or_default();
 
+    if refresh_token.is_empty() {
+        return Err(Status::BadRequest);
+    }
+
     // Clear the refresh token cookie
     jar.remove(Cookie::from("refreshToken"));
 
     // Clear the refresh token in the database
-    let result = sqlx::query("UPDATE \"user\".\"RefreshTokens\" SET expires=$1, \"revokedAt\"=$1, \"revokedByIp\"=$2  WHERE token = $3;")
+    let result = sqlx::query("UPDATE \"user\".\"RefreshTokens\" SET expires = $1, \"revokedAt\" = $1, \"revokedByIp\" = $2  WHERE token = '$3';")
         .bind(Utc::now()) // Set expiration to now
         .bind(ip.0.to_string()) // Set revokedByIp to empty string
         .bind(sha256_hash(&refresh_token)) // Use the SHA256 hash of the token
@@ -223,14 +227,7 @@ async fn logout_user(mut db: Connection<AagDb>, jar: &CookieJar<'_>, ip: ClientI
         return Err(Status::InternalServerError);
     }
 
-    // Check if the cookie was successfully removed
-    if jar.get("refreshToken").is_none() {
-        return Ok(Status::Ok);
-    } else {
-        log_error(db, 0, "Failed to clear refresh token cookie").await;
-        return Err(Status::InternalServerError);
-        
-    }
+    return Ok(Status::Ok);
 }
 
 fn hash_password(password: &str) -> String {
@@ -317,8 +314,8 @@ async fn generate_refresh_token(mut db: Connection<AagDb>, jar: &CookieJar<'_>, 
 fn set_refresh_cookie(jar: &CookieJar<'_>, refresh_token: String, stay_signed_in: bool) {
     // Create a secure cookie for the refresh token
     let mut cookie = Cookie::build(("refreshToken", refresh_token))
-        .http_only(true)
-        .secure(true) // requires HTTPS
+        // .http_only(true)
+        // .secure(true) // requires HTTPS TODO: Enable this in production
         .same_site(SameSite::Lax)
         .path("/");
         

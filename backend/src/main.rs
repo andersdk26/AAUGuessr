@@ -2,7 +2,7 @@
 extern crate rocket;
 use crate::db::connection::AagDb;
 use crate::structures::default::DefaultResponse;
-use rocket::serde::json::Json;
+use rocket::{http::Method, serde::json::Json};
 use rocket_cors::{AllowedOrigins, Cors, CorsOptions};
 use rocket_db_pools::Connection;
 
@@ -34,10 +34,12 @@ fn hello(name: &str) -> Json<DefaultResponse> {
 fn create_cors() -> Cors {
     CorsOptions {
         allowed_origins: AllowedOrigins::all(), // Allow all origins (can be restricted to a list of allowed origins)
-        allowed_methods: vec!["Get".parse().unwrap(), "Post".parse().unwrap()]
+        allowed_methods: vec![Method::Get, Method::Post, Method::Options]
             .into_iter()
+            .map(From::from)
             .collect(),
         allowed_headers: rocket_cors::AllowedHeaders::all(),
+        allow_credentials: true, // Allow credentials (cookies, authorization headers, etc.)
         ..Default::default()
     }
     .to_cors()

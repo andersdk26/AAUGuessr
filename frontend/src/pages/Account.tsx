@@ -20,6 +20,7 @@ function Account() {
                                 headers: {
                                     "Content-Type": "application/json",
                                 },
+                                credentials: "include", // Include cookies in the request
                             }
                         );
                         if (response.ok && response.status === 200) {
