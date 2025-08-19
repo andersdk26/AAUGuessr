@@ -54,6 +54,7 @@ fn rocket() -> _ {
         .attach(init_db())
         .mount("/", routes![index])
         .mount("/hello", routes![hello])
+        .mount("/", routes::auth_routes::get_routes())
         .mount("/", routes::user_routes::get_routes())
         .attach(AdHoc::on_liftoff("Liftoff Message", |_| {
             Box::pin(async {

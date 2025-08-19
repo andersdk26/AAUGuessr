@@ -1,2 +1,4 @@
 [default.databases.aag_db]
 url = "postgres://AAUGuessr-WebApp:abcd1234@localhost:5432/AAUGuessr"
+[default]
+jwt_secret = "futoulDCOYTx546toOTYTutdt456YDydyoTDUTDYotdUDor7959jhfgfGHFUFUFy5382cucVYCUufutcLYCTUCucu1029tuTUTUFtuf2901uFTUFTUfufUUfyu29yftudUFIyf29uDYTdotu"
