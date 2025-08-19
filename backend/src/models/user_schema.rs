@@ -17,7 +17,7 @@ pub struct UsersTableNonsens {
 pub struct UsersTableLoginInput {
     pub email: String,
     pub password: String,
-    // pub stay_signed_in: bool,
+    pub stay_signed_in: bool,
 }
 
 #[derive(serde::Serialize, serde::Deserialize)]
@@ -25,5 +25,5 @@ pub struct UsersTableSignupInput {
     pub username: String,
     pub email: String,
     pub password: String,
-    // pub stay_signed_in: bool,
+    pub stay_signed_in: bool,
 }

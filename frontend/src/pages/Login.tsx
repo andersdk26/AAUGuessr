@@ -67,6 +67,7 @@ function Login() {
             body: JSON.stringify({
                 email: email.value,
                 password: password.value,
+                stay_signed_in: staySignedIn.checked,
             }),
         });
 
@@ -138,6 +139,7 @@ function Login() {
                 username: username.value,
                 email: email.value,
                 password: password.value,
+                stay_signed_in: staySignedIn.checked,
             }),
         });
 

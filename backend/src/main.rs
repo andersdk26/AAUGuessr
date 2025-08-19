@@ -10,7 +10,7 @@ mod db;
 mod models;
 mod routes;
 mod structures;
-mod server_error_handling;
+mod utils;
 
 use db::connection::init_db;
 use rocket::fairing::AdHoc;

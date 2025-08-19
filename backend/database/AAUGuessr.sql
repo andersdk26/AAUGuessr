@@ -2,12 +2,12 @@
 -- PostgreSQL database dump
 --
 
-\restrict qXK98QsMaIVrR5fwy10mM00AnvDMYMmxlHENUan5Y42kcZG0t22uPqiwKIfb4lD
+\restrict 2bt1rh4EmL4Lv3LEqpFUf3arGekYoaxS3OhoMPti4qYP2SWcmZ8DFuHUiOu39fB
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
 
--- Started on 2025-08-18 02:33:10
+-- Started on 2025-08-19 02:31:15
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -42,7 +42,7 @@ CREATE SCHEMA "user";
 ALTER SCHEMA "user" OWNER TO pg_database_owner;
 
 --
--- TOC entry 4859 (class 0 OID 0)
+-- TOC entry 4871 (class 0 OID 0)
 -- Dependencies: 5
 -- Name: SCHEMA "user"; Type: COMMENT; Schema: -; Owner: pg_database_owner
 --
@@ -61,7 +61,7 @@ SET default_table_access_method = heap;
 
 CREATE TABLE log."UserErrors" (
     id bigint NOT NULL,
-    user_id integer,
+    user_id bigint,
     error_message character varying(256),
     "timestamp" timestamp without time zone DEFAULT CURRENT_TIMESTAMP
 );
@@ -76,6 +76,41 @@ ALTER TABLE log."UserErrors" OWNER TO postgres;
 
 ALTER TABLE log."UserErrors" ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
     SEQUENCE NAME log."UserErrors_id_seq"
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
+-- TOC entry 221 (class 1259 OID 16450)
+-- Name: RefreshTokens; Type: TABLE; Schema: user; Owner: postgres
+--
+
+CREATE TABLE "user"."RefreshTokens" (
+    id bigint NOT NULL,
+    token character(256) NOT NULL,
+    "userId" bigint NOT NULL,
+    expires timestamp without time zone NOT NULL,
+    "createdAt" timestamp without time zone DEFAULT now() NOT NULL,
+    "createdByIp" character(39) NOT NULL,
+    "revokedAt" timestamp without time zone,
+    "revokedByIp" character(39),
+    "replacedByTokenId" bigint
+);
+
+
+ALTER TABLE "user"."RefreshTokens" OWNER TO postgres;
+
+--
+-- TOC entry 222 (class 1259 OID 16486)
+-- Name: RefreshTokens_id_seq; Type: SEQUENCE; Schema: user; Owner: postgres
+--
+
+ALTER TABLE "user"."RefreshTokens" ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME "user"."RefreshTokens_id_seq"
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -100,27 +135,34 @@ CREATE TABLE "user"."Users" (
 ALTER TABLE "user"."Users" OWNER TO postgres;
 
 --
--- TOC entry 4853 (class 0 OID 16439)
+-- TOC entry 4863 (class 0 OID 16439)
 -- Dependencies: 220
 -- Data for Name: UserErrors; Type: TABLE DATA; Schema: log; Owner: postgres
 --
 
 COPY log."UserErrors" (id, user_id, error_message, "timestamp") FROM stdin;
-2	1	Failed to set username for user with ID 1: error returned from database: value too long for type character(32)	2025-08-17 23:21:27.443691
-1	\N	hi	2025-08-18 01:20:17.57426
-3	1	Failed to set username for user with ID 1: error returned from database: value too long for type character(32)	2025-08-18 00:08:01.269626
-4	\N	Hej	2025-08-18 02:13:52.26451
-5	\N	login test	2025-08-18 00:15:15.414186
-6	\N	login test	2025-08-18 00:15:32.093339
-7	\N	login test	2025-08-18 00:18:18.125365
-8	\N	login test	2025-08-18 00:18:19.329034
-9	\N	login test	2025-08-18 00:18:40.163172
-10	\N	login test	2025-08-18 00:19:46.755729
+11	\N	Failed to clear refresh token in database	2025-08-19 00:07:02.623151
+12	7266747678	Failed to insert refresh token: error returned from database: column "user_id" of relation "RefreshTokens" does not exist	2025-08-19 00:20:03.677882
+13	7266747678	Failed to insert refresh token: error returned from database: column "userid" of relation "RefreshTokens" does not exist	2025-08-19 00:21:13.741492
+14	7266747678	Failed to insert refresh token: error returned from database: column "userid" of relation "RefreshTokens" does not exist	2025-08-19 00:23:07.388914
+15	7266747678	Failed to insert refresh token: error returned from database: column "createdbyip" of relation "RefreshTokens" does not exist	2025-08-19 00:24:07.145437
+16	7266747678	Failed to insert refresh token: error returned from database: null value in column "id" of relation "RefreshTokens" violates not-null constraint	2025-08-19 00:25:26.334885
 \.
 
 
 --
--- TOC entry 4851 (class 0 OID 16432)
+-- TOC entry 4864 (class 0 OID 16450)
+-- Dependencies: 221
+-- Data for Name: RefreshTokens; Type: TABLE DATA; Schema: user; Owner: postgres
+--
+
+COPY "user"."RefreshTokens" (id, token, "userId", expires, "createdAt", "createdByIp", "revokedAt", "revokedByIp", "replacedByTokenId") FROM stdin;
+1	4b8a1e1e73a51ddc80bab358943166e5f23ef7b17ce343b492522b8fd0f9cf38                                                                                                                                                                                                	7266747678	2025-09-18 00:28:36.076881	2025-08-19 00:28:36.077099	127.0.0.1                              	\N	\N	\N
+\.
+
+
+--
+-- TOC entry 4861 (class 0 OID 16432)
 -- Dependencies: 218
 -- Data for Name: Users; Type: TABLE DATA; Schema: user; Owner: postgres
 --
@@ -133,16 +175,25 @@ COPY "user"."Users" (id, username, email, password) FROM stdin;
 
 
 --
--- TOC entry 4861 (class 0 OID 0)
+-- TOC entry 4873 (class 0 OID 0)
 -- Dependencies: 219
 -- Name: UserErrors_id_seq; Type: SEQUENCE SET; Schema: log; Owner: postgres
 --
 
-SELECT pg_catalog.setval('log."UserErrors_id_seq"', 10, true);
+SELECT pg_catalog.setval('log."UserErrors_id_seq"', 16, true);
 
 
 --
--- TOC entry 4704 (class 2606 OID 16443)
+-- TOC entry 4874 (class 0 OID 0)
+-- Dependencies: 222
+-- Name: RefreshTokens_id_seq; Type: SEQUENCE SET; Schema: user; Owner: postgres
+--
+
+SELECT pg_catalog.setval('"user"."RefreshTokens_id_seq"', 1, true);
+
+
+--
+-- TOC entry 4710 (class 2606 OID 16443)
 -- Name: UserErrors UserErrors_pkey; Type: CONSTRAINT; Schema: log; Owner: postgres
 --
 
@@ -151,7 +202,16 @@ ALTER TABLE ONLY log."UserErrors"
 
 
 --
--- TOC entry 4702 (class 2606 OID 16436)
+-- TOC entry 4712 (class 2606 OID 16455)
+-- Name: RefreshTokens RefreshTokens_pkey; Type: CONSTRAINT; Schema: user; Owner: postgres
+--
+
+ALTER TABLE ONLY "user"."RefreshTokens"
+    ADD CONSTRAINT "RefreshTokens_pkey" PRIMARY KEY (id);
+
+
+--
+-- TOC entry 4708 (class 2606 OID 16436)
 -- Name: Users User_pkey; Type: CONSTRAINT; Schema: user; Owner: postgres
 --
 
@@ -160,7 +220,7 @@ ALTER TABLE ONLY "user"."Users"
 
 
 --
--- TOC entry 4705 (class 2606 OID 16444)
+-- TOC entry 4713 (class 2606 OID 16477)
 -- Name: UserErrors user_id; Type: FK CONSTRAINT; Schema: log; Owner: postgres
 --
 
@@ -169,7 +229,25 @@ ALTER TABLE ONLY log."UserErrors"
 
 
 --
--- TOC entry 4860 (class 0 OID 0)
+-- TOC entry 4714 (class 2606 OID 16461)
+-- Name: RefreshTokens replacedTokenId; Type: FK CONSTRAINT; Schema: user; Owner: postgres
+--
+
+ALTER TABLE ONLY "user"."RefreshTokens"
+    ADD CONSTRAINT "replacedTokenId" FOREIGN KEY ("replacedByTokenId") REFERENCES "user"."RefreshTokens"(id) NOT VALID;
+
+
+--
+-- TOC entry 4715 (class 2606 OID 16468)
+-- Name: RefreshTokens userId; Type: FK CONSTRAINT; Schema: user; Owner: postgres
+--
+
+ALTER TABLE ONLY "user"."RefreshTokens"
+    ADD CONSTRAINT "userId" FOREIGN KEY ("userId") REFERENCES "user"."Users"(id) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- TOC entry 4872 (class 0 OID 0)
 -- Dependencies: 5
 -- Name: SCHEMA "user"; Type: ACL; Schema: -; Owner: pg_database_owner
 --
@@ -177,11 +255,11 @@ ALTER TABLE ONLY log."UserErrors"
 GRANT USAGE ON SCHEMA "user" TO PUBLIC;
 
 
--- Completed on 2025-08-18 02:33:10
+-- Completed on 2025-08-19 02:31:15
 
 --
 -- PostgreSQL database dump complete
 --
 
-\unrestrict qXK98QsMaIVrR5fwy10mM00AnvDMYMmxlHENUan5Y42kcZG0t22uPqiwKIfb4lD
+\unrestrict 2bt1rh4EmL4Lv3LEqpFUf3arGekYoaxS3OhoMPti4qYP2SWcmZ8DFuHUiOu39fB
 
