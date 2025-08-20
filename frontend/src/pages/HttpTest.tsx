@@ -55,7 +55,7 @@ function HttpTest() {
         }
         try {
             const response: AxiosResponse<messageProps> = await axios.get(
-                `http://localhost:8000/user/username/${id}`,
+                `http://localhost:8000/user/setusername`,
                 {
                     params: {
                         set: newUsername,

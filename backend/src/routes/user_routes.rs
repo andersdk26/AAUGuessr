@@ -35,23 +35,22 @@ async fn read_user(mut db: Connection<AagDb>, id: i64) -> Result<Json<UsersTable
     }
 }
 
-#[get("/user/username/<id>?<set>")]
+#[get("/user/setusername?<set>")]
 async fn set_username(
     mut db: Connection<AagDb>,
-    AuthenticatedUser(user_id): AuthenticatedUser,
-    id: i64,
+    _user: AuthenticatedUser,
     set: &str,
 ) -> Result<Status, Status> {
     let result = sqlx::query("UPDATE \"user\".\"Users\" SET username = $1 WHERE id = $2")
         .bind(set)
-        .bind(id)
+        .bind(_user.user_id)
         .execute(&mut **db)
         .await;
 
     match result {
         Ok(_) => Ok(Status::Ok),
         Err(e) => {
-            log_error(db, id, &format!("Failed to set username for user with ID {}: {}", id, e)).await;
+            log_error(db, _user.user_id, &format!("Failed to set username for user with ID {}: {}", _user.user_id, e)).await;
             Err(Status::InternalServerError)
         }
     }

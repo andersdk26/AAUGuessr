@@ -14,5 +14,5 @@ pub struct LoginResponse {
 }
 
 pub struct AuthenticatedUser {
-    pub user_id: String,
+    pub user_id: i64,
 }

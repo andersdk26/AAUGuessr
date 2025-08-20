@@ -33,10 +33,20 @@ impl<'r> FromRequest<'r> for AuthenticatedUser {
             &DecodingKey::from_secret(jwt_secret.as_ref()),
             &Validation::default()
         ) {
+            
             // If decoding is successful, extract the user ID
-            Ok(data) => Outcome::Success(AuthenticatedUser {
-                user_id: data.claims.sub,
-            }),
+            Ok(data) => {
+                let user_id = data.claims.sub.parse::<i64>()
+                    .unwrap_or(0); // Default to 0 if parsing fails
+
+                if user_id == 0 {
+                    return Outcome::Error((Status::Unauthorized, ()));
+                }
+
+                return Outcome::Success(AuthenticatedUser {
+                    user_id 
+                }
+        )},
             Err(_) => Outcome::Error((Status::Unauthorized, ())),
         }
     }
