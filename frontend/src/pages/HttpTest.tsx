@@ -29,7 +29,7 @@ function HttpTest() {
     const getHello = async () => {
         try {
             const response: AxiosResponse<messageProps> = await axios.get(
-                "http://localhost:8000/hello/Per"
+                `http://localhost:8000/hello/${id}`
             );
             console.log(response.data);
             setHelloData(response.data.message);
@@ -41,7 +41,13 @@ function HttpTest() {
     const getUser = async () => {
         try {
             const response: AxiosResponse<UserTableProps> = await axios.get(
-                `http://localhost:8000/user/${id}`
+                `http://localhost:8000/user/getusername`,
+                {
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${accessToken}`,
+                    },
+                }
             );
             console.log(response.data);
             setUsername(response.data.username);

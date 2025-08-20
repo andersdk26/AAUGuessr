@@ -12,10 +12,10 @@ use crate::structures::auth_structures::AuthenticatedUser;
 // Utils
 use crate::utils::server_error_handling::log_error;
 
-#[get("/user/<id>")]
-async fn read_user(mut db: Connection<AagDb>, id: i64) -> Result<Json<UsersTableNonsens>, Status> {
+#[get("/user/getusername")]
+async fn read_user(mut db: Connection<AagDb>, _user: AuthenticatedUser) -> Result<Json<UsersTableNonsens>, Status> {
     let row = sqlx::query("SELECT username FROM \"user\".\"Users\" WHERE id = $1")
-        .bind(id)
+        .bind(_user.user_id)
         .fetch_one(&mut **db)
         .await;
 
@@ -23,13 +23,13 @@ async fn read_user(mut db: Connection<AagDb>, id: i64) -> Result<Json<UsersTable
         Ok(r) => {
             // Return non sensitive user information
             let username: String = r.try_get("username").unwrap_or_default();
-            Ok(Json(UsersTableNonsens { id, username }))
+            Ok(Json(UsersTableNonsens { id: _user.user_id, username }))
         }
         Err(sqlx::Error::RowNotFound) => {
             Err(Status::NotFound)
         }
         Err(e) => {
-            log_error(db, id, &format!("Failed to fetch user with ID {}: {}", id, e)).await;
+            log_error(db, _user.user_id, &format!("Failed to fetch user with ID {}: {}", _user.user_id, e)).await;
             Err(Status::InternalServerError)
         }
     }
