@@ -167,6 +167,8 @@ async fn logout_user(mut db: Connection<AagDb>, jar: &CookieJar<'_>, ip: ClientI
         .map(|cookie| cookie.value().to_string())
         .unwrap_or_default();
 
+    println!("Logout request from token: {}", refresh_token);
+
     if refresh_token.is_empty() {
         return Err(Status::BadRequest);
     }
@@ -288,8 +290,8 @@ async fn generate_refresh_token(mut db: Connection<AagDb>, jar: &CookieJar<'_>, 
 fn set_refresh_cookie(jar: &CookieJar<'_>, refresh_token: String, stay_signed_in: bool) {
     // Create a secure cookie for the refresh token
     let mut cookie = Cookie::build(("refreshToken", refresh_token))
-        // .http_only(true)
-        // .secure(true) // requires HTTPS TODO: Enable this in production
+        .http_only(false) // Set to true in production
+        .secure(false) // requires HTTPS TODO: Enable this in production
         .same_site(SameSite::Lax)
         .path("/");
         

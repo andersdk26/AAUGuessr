@@ -14,7 +14,7 @@ function Account() {
                 onClick={() => {
                     async function logout() {
                         const response = await fetch(
-                            "http://localhost:8000/user/logout",
+                            "http://localhost:5173/api/user/logout",
                             {
                                 method: "POST",
                                 headers: {

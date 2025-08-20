@@ -59,7 +59,7 @@ function Login() {
         }
 
         // Send user input to server
-        const response = await fetch("http://localhost:8000/user/login", {
+        const response = await fetch("http://localhost:5173/api/user/login", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -130,7 +130,7 @@ function Login() {
         }
 
         // Send user input to server
-        const response = await fetch("http://localhost:8000/user/create", {
+        const response = await fetch("http://localhost:5173/api/user/create", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",

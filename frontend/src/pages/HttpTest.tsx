@@ -29,7 +29,7 @@ function HttpTest() {
     const getHello = async () => {
         try {
             const response: AxiosResponse<messageProps> = await axios.get(
-                `http://localhost:8000/hello/${id}`
+                `http://localhost:5173/api/hello/${id}`
             );
             console.log(response.data);
             setHelloData(response.data.message);
@@ -41,7 +41,7 @@ function HttpTest() {
     const getUser = async () => {
         try {
             const response: AxiosResponse<UserTableProps> = await axios.get(
-                `http://localhost:8000/user/getusername`,
+                `http://localhost:5173/api/user/getusername`,
                 {
                     headers: {
                         "Content-Type": "application/json",
@@ -63,7 +63,7 @@ function HttpTest() {
         }
         try {
             const response: AxiosResponse<messageProps> = await axios.get(
-                `http://localhost:8000/user/setusername`,
+                `http://localhost:5173/api/user/setusername`,
                 {
                     params: {
                         set: newUsername,
