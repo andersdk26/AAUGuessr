@@ -24,11 +24,9 @@ impl<'r> FromRequest<'r> for AuthenticatedUser {
             Some(t) => t,
             None => return Outcome::Error((Status::Unauthorized, ())),
         };
-        println!("Token: {}", token);
 
         // Decode the JWT token
         let jwt_secret = rocket::Config::figment().extract_inner::<String>("jwt_secret").unwrap();
-        println!("Using secret: {}", jwt_secret);
 
         match decode::<JwtClaims>(
             token,
@@ -41,8 +39,6 @@ impl<'r> FromRequest<'r> for AuthenticatedUser {
                 let user_id = data.claims.sub.parse::<i64>()
                 .unwrap_or(0); // Default to 0 if parsing fails
             
-                println!("Decoded JWT claims: {:?}", user_id);
-
                 if user_id == 0 {
                     return Outcome::Error((Status::Unauthorized, ()));
                 }
@@ -51,7 +47,7 @@ impl<'r> FromRequest<'r> for AuthenticatedUser {
                     user_id 
                 }
         )},
-            Err(e) => {println!("Error: {}", e); Outcome::Error((Status::Unauthorized, ()))},
+            Err(_) => Outcome::Error((Status::Unauthorized, ())),
         }
     }
 }
