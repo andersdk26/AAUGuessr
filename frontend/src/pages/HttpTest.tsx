@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import axios, { AxiosResponse } from "axios";
 import { useParams } from "react-router-dom";
 import "../App.css";
+import useAuth from "../components/authentication/useAuth";
 
 interface messageProps {
     message: string;
@@ -23,6 +24,7 @@ function HttpTest() {
     const [showMessage, setShowMessage] = useState<string>("");
     const { id } = useParams();
     const usernameRef = useRef<HTMLInputElement>(null);
+    const { accessToken } = useAuth();
 
     const getHello = async () => {
         try {
@@ -59,6 +61,10 @@ function HttpTest() {
                 {
                     params: {
                         set: newUsername,
+                    },
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${accessToken}`,
                     },
                 }
             );
