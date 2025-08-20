@@ -7,8 +7,12 @@ pub struct LoginResponse {
 }
 
 #[derive(Serialize, Deserialize)]
-    pub struct JwtBody {
-        pub user: String,
-        pub exp: usize,
-        pub created: usize,
-    }
+    pub struct JwtClaims {
+    pub sub: String,
+    pub exp: usize,
+    pub iat: usize,
+}
+
+pub struct AuthenticatedUser {
+    pub user_id: String,
+}

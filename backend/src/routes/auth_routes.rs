@@ -13,13 +13,14 @@ use rocket::http::{Cookie, CookieJar, SameSite};
 use argon2::{Argon2, PasswordHasher, PasswordHash, Params, Algorithm, Version};
 use password_hash::{SaltString, rand_core::OsRng, PasswordVerifier};
 use sha2::{Sha256, Digest};
+use jsonwebtoken::{encode, EncodingKey, Header};
 
 // structures
 use crate::db::connection::AagDb;
-use crate::models::user_schema::UsersTableLoginInput;
-use crate::models::user_schema::UsersTableSignupInput;
-use crate::structures::user_structures::LoginResponse;
-use crate::structures::user_structures::JwtBody;
+use crate::models::auth_schema::UsersTableLoginInput;
+use crate::models::auth_schema::UsersTableSignupInput;
+use crate::structures::auth_structures::LoginResponse;
+use crate::structures::auth_structures::JwtClaims;
 
 // Utils
 use crate::utils::server_error_handling::log_error;
@@ -240,16 +241,16 @@ async fn generate_access_token(user_id: i64) -> String {
     let jwt_secret = rocket::Config::figment().extract_inner::<String>("jwt_secret").unwrap();
 
     // Generate JWT access token
-    let header = jsonwebtoken::Header::default();
-    let body = JwtBody {
-        user: user_id.to_string(),
+    let header = Header::default();
+    let body = JwtClaims {
+        sub: user_id.to_string(),
         exp: (chrono::Utc::now() + chrono::Duration::minutes(15)).timestamp() as usize, // 15 minutes expiration
-        created: chrono::Utc::now().timestamp() as usize,
+        iat: chrono::Utc::now().timestamp() as usize,
     };
     
     // Encode the token
-    let secret = jsonwebtoken::EncodingKey::from_secret(jwt_secret.as_bytes());
-    let token = jsonwebtoken::encode(&header, &body, &secret).unwrap();
+    let secret = EncodingKey::from_secret(jwt_secret.as_bytes());
+    let token = encode(&header, &body, &secret).unwrap();
     
     return token
 }

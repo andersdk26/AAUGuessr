@@ -1,2 +1,2 @@
 pub mod default;
-pub mod user_structures;
+pub mod auth_structures;

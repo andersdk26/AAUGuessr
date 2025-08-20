@@ -7,6 +7,7 @@ use sqlx::Row;
 // structures
 use crate::db::connection::AagDb;
 use crate::models::user_schema::UsersTableNonsens;
+use crate::structures::auth_structures::AuthenticatedUser;
 
 // Utils
 use crate::utils::server_error_handling::log_error;
@@ -37,6 +38,7 @@ async fn read_user(mut db: Connection<AagDb>, id: i64) -> Result<Json<UsersTable
 #[get("/user/username/<id>?<set>")]
 async fn set_username(
     mut db: Connection<AagDb>,
+    AuthenticatedUser(user_id): AuthenticatedUser,
     id: i64,
     set: &str,
 ) -> Result<Status, Status> {
