@@ -15,7 +15,7 @@ use password_hash::{SaltString, rand_core::OsRng, PasswordVerifier};
 use sha2::{Sha256, Digest};
 use jsonwebtoken::{encode, EncodingKey, Header};
 
-// structures
+// Structures
 use crate::db::connection::AagDb;
 use crate::models::auth_schema::UsersTableLoginInput;
 use crate::models::auth_schema::UsersTableSignupInput;
@@ -167,8 +167,6 @@ async fn logout_user(mut db: Connection<AagDb>, jar: &CookieJar<'_>, ip: ClientI
         .map(|cookie| cookie.value().to_string())
         .unwrap_or_default();
 
-    println!("Logout request from token: {}", refresh_token);
-
     if refresh_token.is_empty() {
         return Err(Status::BadRequest);
     }
@@ -200,6 +198,60 @@ async fn logout_user(mut db: Connection<AagDb>, jar: &CookieJar<'_>, ip: ClientI
     }
 
     return Ok(Status::Ok);
+}
+
+#[get("/user/refreshtoken")]
+async fn refresh_token(mut db: Connection<AagDb>, jar: &CookieJar<'_>, ip: ClientIp) -> Result<Json<LoginResponse>, Status> {
+    // Check if the refresh token cookie exists
+    let refresh_token = jar.get("refreshToken")
+        .map(|cookie| cookie.value().to_string())
+        .unwrap_or_default();
+
+    if refresh_token.is_empty() {
+        return Err(Status::BadRequest);
+    }
+
+    let hashed_token = sha256_hash(&refresh_token);
+
+    // Find the refresh token in the database
+    let result = sqlx::query("SELECT * FROM \"user\".\"RefreshTokens\" WHERE token = $1")
+        .bind(&hashed_token)
+        .fetch_one(&mut **db)
+        .await;
+
+    match result {
+        Ok(row) => {
+            // Check if the token is expired
+            let expires: chrono::DateTime<Utc> = row.try_get("expires").unwrap_or(Utc::now());
+            if Utc::now() > expires {
+                return Err(Status::Unauthorized);
+            }
+
+            // Check if the token is revoked
+            let revoked_at: Option<chrono::DateTime<Utc>> = row.try_get("revokedAt").ok();
+            if revoked_at.is_some() {
+                return Err(Status::Unauthorized);
+            }
+
+            // Generate new access token
+            let user_id: i64 = row.try_get("userId").unwrap_or(0);
+            if user_id == 0 {
+                return Err(Status::Unauthorized);
+            }
+            let access_token = generate_access_token(user_id).await;
+
+            // Optionally, you could also generate a new refresh token here and set it in the cookie
+            // For simplicity, we'll keep the same refresh token for now
+
+            return Ok(Json(LoginResponse {
+                access_token,
+            }));
+        }
+        Err(e) => {
+            log_error(db, 0, &format!("Failed to fetch refresh token: {}", e)).await;
+            return Err(Status::InternalServerError);
+        }
+    }
 }
 
 fn hash_password(password: &str) -> String {
@@ -335,5 +387,5 @@ fn sha256_hash(token: &str) -> String {
 }
 
 pub fn get_routes() -> Vec<Route> {
-    routes![login_user, create_user, logout_user]
+    routes![login_user, create_user, logout_user, refresh_token]
 }

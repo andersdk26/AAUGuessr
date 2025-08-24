@@ -4,9 +4,11 @@ use rocket::{get, routes, Route};
 use rocket_db_pools::{sqlx, Connection};
 use sqlx::Row;
 
-// structures
+// Structures
 use crate::db::connection::AagDb;
 use crate::models::user_schema::UsersTableNonsens;
+
+// Auth request guard
 use crate::structures::auth_structures::AuthenticatedUser;
 
 // Utils
