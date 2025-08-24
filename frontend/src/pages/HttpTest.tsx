@@ -3,6 +3,7 @@ import axios, { AxiosResponse } from "axios";
 import { useParams } from "react-router-dom";
 import "../App.css";
 import useAuth from "../components/authentication/useAuth";
+import apiFetch from "../components/apiFetch";
 
 interface messageProps {
     message: string;
@@ -28,7 +29,7 @@ function HttpTest() {
 
     const getHello = async () => {
         try {
-            const response: AxiosResponse<messageProps> = await axios.get(
+            const response: AxiosResponse<messageProps> = await apiFetch.get(
                 `http://localhost:5173/api/hello/${id}`
             );
             console.log(response.data);

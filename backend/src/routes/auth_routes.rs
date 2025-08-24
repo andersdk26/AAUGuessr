@@ -307,7 +307,7 @@ async fn generate_access_token(user_id: i64) -> String {
     let header = Header::default();
     let body = JwtClaims {
         sub: user_id.to_string(),
-        exp: (chrono::Utc::now() + chrono::Duration::minutes(15)).timestamp() as usize, // 15 minutes expiration
+        exp: (chrono::Utc::now() + chrono::Duration::minutes(5)).timestamp() as usize, // 15 minutes expiration CHANGE IN PRODUCTION
         iat: chrono::Utc::now().timestamp() as usize,
     };
     
