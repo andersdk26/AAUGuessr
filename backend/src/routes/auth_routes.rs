@@ -176,18 +176,27 @@ async fn logout_user(mut db: Connection<AagDb>, jar: &CookieJar<'_>, ip: ClientI
     // Clear the refresh token cookie
     jar.remove(Cookie::from("refreshToken"));
 
+    let time_now = Utc::now();
+
     // Clear the refresh token in the database
-    let result = sqlx::query("UPDATE \"user\".\"RefreshTokens\" SET expires = $1, \"revokedAt\" = $1, \"revokedByIp\" = $2  WHERE token = '$3';")
-        .bind(Utc::now()) // Set expiration to now
+    let result = sqlx::query("UPDATE \"user\".\"RefreshTokens\" SET expires = $1, \"revokedAt\" = $2, \"revokedByIp\" = $3  WHERE token = $4;")
+        .bind(time_now) // Set expiration to now
+        .bind(time_now)
         .bind(ip.0.to_string()) // Set revokedByIp to empty string
         .bind(sha256_hash(&refresh_token)) // Use the SHA256 hash of the token
         .execute(&mut **db)
-        .await
-        .is_ok();
+        .await;
 
-    if !result {
-        log_error(db, 0, "Failed to clear refresh token in database").await;
-        return Err(Status::InternalServerError);
+    match result {
+        Ok(row) => {
+            if row.rows_affected() == 0 {
+                log_error(db, 0, &format!("Refresh token not changed in database: {}", sha256_hash(&refresh_token))).await;
+            }
+        },
+        Err(e) => {
+            log_error(db, 0, &format!("Failed to clear refresh token: {}", e)).await;
+            return Err(Status::InternalServerError);
+        }
     }
 
     return Ok(Status::Ok);
