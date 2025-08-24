@@ -1,11 +1,20 @@
 import "../App.css";
 import Button from "../components/Button";
+import { useRef, useEffect } from "react";
+import useAuth from "../components/authentication/useAuth";
 
 /**
  * Account page
  * @returns Account page
  */
 function Account() {
+    const accessTokenRef = useRef<HTMLInputElement>(null);
+    const { accessToken, setAccessToken } = useAuth();
+
+    useEffect(() => {
+        alert(`Current access token: ${accessToken}`);
+    }, [accessToken]);
+
     return (
         <>
             <h1>Account</h1>
@@ -34,6 +43,34 @@ function Account() {
             >
                 Log out
             </Button>
+            {/* Change accessToken */}
+            <div className="input-group mb-3">
+                <div className="form-floating">
+                    <input
+                        type="text"
+                        className="form-control"
+                        id="floatingInputGroup1"
+                        placeholder="access token"
+                        ref={accessTokenRef}
+                    />
+                    <label>New access tokne</label>
+                </div>
+                <span className="input-group-text">
+                    <button
+                        type="button"
+                        className="btn btn-primary"
+                        onClick={() => {
+                            if (accessTokenRef.current) {
+                                setAccessToken(
+                                    accessTokenRef.current?.value || null
+                                );
+                            }
+                        }}
+                    >
+                        Set
+                    </button>
+                </span>
+            </div>
         </>
     );
 }
