@@ -363,6 +363,10 @@ async fn generate_refresh_token(mut db: Connection<AagDb>, jar: &CookieJar<'_>, 
         return false;
     }
 
+    if old_token_hash.is_empty() {
+        return true; // No old token to revoke
+    }
+    
     // Revoke the old refresh token
     let result2 = sqlx::query("UPDATE \"user\".\"RefreshTokens\" SET \"revokedAt\" = $1, \"revokedByIp\" = $2  WHERE token = $3;")
         .bind(Utc::now().naive_utc()) // Set revokedAt to now without timezone
