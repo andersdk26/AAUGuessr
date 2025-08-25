@@ -7,20 +7,13 @@ const apiFetch = axios.create({
     withCredentials: true, // Require cookies for CORS requests
 });
 
-// Request interceptor: insert token in headers
-apiFetch.interceptors.request.use(
-    (config) => {
-        const { accessToken } = useAuth();
-        if (accessToken) {
-            config.headers.Authorization = `Bearer ${accessToken}`;
-        } else {
-            window.location.href = "/login"; // Redirect to login if no token
-            throw new axios.Cancel("No access token available");
-        }
-        return config;
-    },
-    (error) => Promise.reject(error)
-);
+export const setAuthToken = (token: string | null) => {
+    if (token) {
+        apiFetch.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+    } else {
+        delete apiFetch.defaults.headers.common["Authorization"];
+    }
+};
 
 // Response interceptor: handle 401 errors and refresh token
 apiFetch.interceptors.response.use(
@@ -34,11 +27,12 @@ apiFetch.interceptors.response.use(
             try {
                 // Request a new access token using the refresh token
                 const res = await axios.post(
-                    "http://localhost:5173/api/user/refresh",
+                    "http://localhost:5173/api/user/refreshtoken",
                     {},
                     { withCredentials: true }
                 );
 
+                alert("Session refreshed");
                 const newToken = res.data.access_token;
                 const { setAccessToken } = useAuth();
 

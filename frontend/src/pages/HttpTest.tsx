@@ -30,7 +30,7 @@ function HttpTest() {
     const getHello = async () => {
         try {
             const response: AxiosResponse<messageProps> = await apiFetch.get(
-                `http://localhost:5173/api/hello/${id}`
+                `/hello/${id}`
             );
             console.log(response.data);
             setHelloData(response.data.message);
@@ -41,12 +41,12 @@ function HttpTest() {
 
     const getUser = async () => {
         try {
-            const response: AxiosResponse<UserTableProps> = await axios.get(
+            const response: AxiosResponse<UserTableProps> = await apiFetch.get(
                 `http://localhost:5173/api/user/getusername`,
                 {
                     headers: {
                         "Content-Type": "application/json",
-                        Authorization: `Bearer ${accessToken}`,
+                        // Authorization: `Bearer ${accessToken}`,
                     },
                 }
             );
