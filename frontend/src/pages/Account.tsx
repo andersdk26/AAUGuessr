@@ -33,7 +33,7 @@ function Account() {
                             }
                         );
                         if (response.ok && response.status === 200) {
-                            window.location.reload();
+                            setAccessToken(null);
                         } else {
                             alert("Failed to log out. Please try again.");
                         }
