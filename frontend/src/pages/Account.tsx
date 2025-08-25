@@ -12,7 +12,7 @@ function Account() {
     const { accessToken, setAccessToken } = useAuth();
 
     useEffect(() => {
-        alert(`Current access token: ${accessToken}`);
+        console.log(`Current access token: ${accessToken}`);
     }, [accessToken]);
 
     return (
