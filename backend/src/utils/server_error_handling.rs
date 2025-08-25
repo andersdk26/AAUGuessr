@@ -6,7 +6,7 @@ struct ErrorLog {
     error_message: String,
 }
 
-pub async fn log_error(mut db: Connection<AagDb> ,user_id: i64, error_message: &str) {
+pub async fn log_error(mut db: Connection<AagDb>, user_id: i64, error_message: &str) {
     // Create an instance of ErrorLog with the provided user_id and error_message
     let error_log = ErrorLog {
         user_id,
