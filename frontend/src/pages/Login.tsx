@@ -1,6 +1,6 @@
 import { Navigate } from "react-router-dom";
 import "../App.css";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Button from "../components/Button";
 import Alert from "../components/Alert";
 import useAuth from "../components/authentication/useAuth";
@@ -14,7 +14,7 @@ function Login() {
     const [staySignedIn, setStaySignedIn] = useState(true);
     const [showAlert, setShowAlert] = useState(false);
     const [alertMessage, setAlertMessage] = useState("");
-    let alertTimeout: NodeJS.Timeout;
+    const alertTimeout = useRef<NodeJS.Timeout | null>(null);
     const [passwordHelpBlock, setPasswordHelpBlock] = useState({
         char: false,
         letter: false,
@@ -218,10 +218,12 @@ function Login() {
     };
 
     const alert = (msg: string) => {
-        clearTimeout(alertTimeout);
+        if (alertTimeout.current) {
+            clearTimeout(alertTimeout.current);
+        }
         setAlertMessage(msg);
         setShowAlert(true);
-        alertTimeout = setTimeout(() => setShowAlert(false), 5000);
+        alertTimeout.current = setTimeout(() => setShowAlert(false), 5000);
     };
 
     return accessToken ? ( // If user is already authenticated, redirect to home page
