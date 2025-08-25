@@ -2,7 +2,7 @@
 extern crate rocket;
 use crate::db::connection::AagDb;
 use crate::structures::default::DefaultResponse;
-use rocket::serde::json::Json;
+use rocket::{http::Method, serde::json::Json};
 use rocket_cors::{AllowedOrigins, Cors, CorsOptions};
 use rocket_db_pools::Connection;
 
@@ -10,6 +10,7 @@ mod db;
 mod models;
 mod routes;
 mod structures;
+mod utils;
 
 use db::connection::init_db;
 use rocket::fairing::AdHoc;
@@ -17,7 +18,7 @@ use rocket::fairing::AdHoc;
 // Default route
 #[get("/")]
 async fn index(_db: Connection<AagDb>) -> &'static str {
-    "Successfully connected to PostgreSQL database 'AND'!"
+    "Successfully connected to PostgreSQL database 'AAUGuessr'!"
 }
 
 // Return a JSON response with the name provided in the URL, route
@@ -33,10 +34,12 @@ fn hello(name: &str) -> Json<DefaultResponse> {
 fn create_cors() -> Cors {
     CorsOptions {
         allowed_origins: AllowedOrigins::all(), // Allow all origins (can be restricted to a list of allowed origins)
-        allowed_methods: vec!["Get".parse().unwrap(), "POST".parse().unwrap()]
+        allowed_methods: vec![Method::Get, Method::Post, Method::Options]
             .into_iter()
+            .map(From::from)
             .collect(),
         allowed_headers: rocket_cors::AllowedHeaders::all(),
+        allow_credentials: true, // Allow credentials (cookies, authorization headers, etc.)
         ..Default::default()
     }
     .to_cors()
@@ -51,6 +54,7 @@ fn rocket() -> _ {
         .attach(init_db())
         .mount("/", routes![index])
         .mount("/hello", routes![hello])
+        .mount("/", routes::auth_routes::get_routes())
         .mount("/", routes::user_routes::get_routes())
         .attach(AdHoc::on_liftoff("Liftoff Message", |_| {
             Box::pin(async {

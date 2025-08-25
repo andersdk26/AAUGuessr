@@ -1,7 +1,8 @@
 import { useEffect, useState, useRef } from "react";
-import axios, { AxiosResponse } from "axios";
+import { AxiosResponse } from "axios";
 import { useParams } from "react-router-dom";
 import "../App.css";
+import apiFetch from "../components/apiFetch";
 
 interface messageProps {
     message: string;
@@ -24,56 +25,69 @@ function HttpTest() {
     const { id } = useParams();
     const usernameRef = useRef<HTMLInputElement>(null);
 
+    // Example GET request
     const getHello = async () => {
         try {
-            const response: AxiosResponse<messageProps> = await axios.get(
-                "http://localhost:8000/hello/Per"
+            const response: AxiosResponse<messageProps> = await apiFetch.get(
+                `/hello/${id}`
             );
             console.log(response.data);
             setHelloData(response.data.message);
         } catch (error) {
-            console.error("Error receiving helloData:", error);
+            console.error("Error receiving hello data:", error);
         }
     };
 
+    // Get user data from authenticated user
     const getUser = async () => {
         try {
-            const response: AxiosResponse<UserTableProps> = await axios.get(
-                `http://localhost:8000/user/${id}`
+            const response: AxiosResponse<UserTableProps> = await apiFetch.get(
+                `/api/user/getusername`,
+                {
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                }
             );
             console.log(response.data);
             setUsername(response.data.username);
         } catch (error) {
-            console.error("Error receiving helloData:", error);
+            console.error("Error receiving user data:", error);
+            setUsername("");
         }
     };
 
+    // Set user username for authenticated user
     const setUserUsername = async (newUsername: string | null) => {
         if (newUsername == null) {
             return;
         }
         try {
-            const response: AxiosResponse<messageProps> = await axios.get(
-                `http://localhost:8000/user/username/${id}`,
+            const response: AxiosResponse<messageProps> = await apiFetch.get(
+                `/user/setusername`,
                 {
                     params: {
                         set: newUsername,
                     },
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
                 }
             );
-            console.log(response.data);
-            if (response.data.status === "success") {
+            if (response.status === 200) {
                 setUsername(newUsername);
-                setShowMessage("Username set successfully");
+                setShowMessage("Username changed successfully");
             } else {
-                setShowMessage("Username set failed" + response.data.message);
+                throw new Error(`code: ${response.status}`);
             }
-            setTimeout(setShowMessage, 2000, "");
         } catch (error) {
-            console.error("Error receiving helloData:", error);
+            console.error("Error receiving data:", error);
+            setShowMessage("Username change failed");
         }
+        setTimeout(setShowMessage, 2000, "");
     };
 
+    // Fetch hello data on component mount
     useEffect(() => {
         getHello();
     }, []);

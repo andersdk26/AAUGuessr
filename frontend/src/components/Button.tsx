@@ -16,13 +16,16 @@ interface ButtonWithChildren extends ButtonBaseProps {
         | "warning"
         | "info"
         | "light"
-        | "dark";
+        | "dark"
+        | "link";
+    formType?: "submit" | "reset" | "button";
     children: ReactNode;
 }
 
 // Close button variant
 interface CloseButton extends ButtonBaseProps {
     type: "close";
+    formType?: never;
     children?: never;
 }
 
@@ -44,6 +47,7 @@ type ButtonProps = ButtonWithChildren | CloseButton;
 function Button({
     children,
     type = "primary",
+    formType = "button",
     onClick,
     outline = false,
     className,
@@ -52,7 +56,7 @@ function Button({
 
     return (
         <button
-            type="button"
+            type={formType}
             className={`btn btn-${outlineText() + type} ${className}`}
             onClick={onClick}
         >

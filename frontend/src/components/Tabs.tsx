@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 
 interface TabsProps {
     items: { name: string; path: string }[];
@@ -44,7 +45,7 @@ function Tabs({ items, selectedPath }: TabsProps) {
                 {/* Render each tab item */}
                 {items.map((item, index) => (
                     <li className="nav-item" key={index}>
-                        <a
+                        <Link
                             className={
                                 selectedIndex === index
                                     ? "nav-link active"
@@ -54,7 +55,7 @@ function Tabs({ items, selectedPath }: TabsProps) {
                                           : " placeholder-wave active")
                             }
                             aria-current="page"
-                            href={item.path}
+                            to={item.path}
                             onClick={() => setSelectedIndex(index)}
                         >
                             {item.name || (
@@ -68,7 +69,7 @@ function Tabs({ items, selectedPath }: TabsProps) {
                                     Loading...
                                 </p>
                             )}
-                        </a>
+                        </Link>
                     </li>
                 ))}
             </ul>
