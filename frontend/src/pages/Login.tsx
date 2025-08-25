@@ -78,7 +78,7 @@ function Login() {
             console.log(data);
             setAccessToken(data.access_token);
 
-            <Navigate to="/" />;
+            return <Navigate to="/" />;
         } else if (response.status === 403) {
             alert("Invalid email or password");
         } else if (response.status === 500) {
@@ -150,7 +150,7 @@ function Login() {
             console.log(data);
             setAccessToken(data.access_token);
 
-            <Navigate to="/" />;
+            return <Navigate to="/" />;
         } else if (response.status === 403) {
             alert("Invalid credentials");
         } else if (response.status === 409) {

@@ -156,7 +156,7 @@ async fn create_user(mut db: Connection<AagDb>, jar: &CookieJar<'_>, ip: ClientI
         }
     }
 
-    log_error(db, 0, "Failed to create user: {}").await;
+    log_error(db, 0, "Failed to create user: Could not find an id or insert user").await;
     return Err(Status::InternalServerError);
     
 }

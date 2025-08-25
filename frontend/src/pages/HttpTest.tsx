@@ -1,8 +1,7 @@
 import { useEffect, useState, useRef } from "react";
-import axios, { AxiosResponse } from "axios";
+import { AxiosResponse } from "axios";
 import { useParams } from "react-router-dom";
 import "../App.css";
-import useAuth from "../components/authentication/useAuth";
 import apiFetch from "../components/apiFetch";
 
 interface messageProps {
@@ -25,7 +24,6 @@ function HttpTest() {
     const [showMessage, setShowMessage] = useState<string>("");
     const { id } = useParams();
     const usernameRef = useRef<HTMLInputElement>(null);
-    const { accessToken } = useAuth();
 
     // Example GET request
     const getHello = async () => {
@@ -65,7 +63,7 @@ function HttpTest() {
             return;
         }
         try {
-            const response: AxiosResponse<messageProps> = await axios.get(
+            const response: AxiosResponse<messageProps> = await apiFetch.get(
                 `http://localhost:5173/api/user/setusername`,
                 {
                     params: {
@@ -73,7 +71,6 @@ function HttpTest() {
                     },
                     headers: {
                         "Content-Type": "application/json",
-                        Authorization: `Bearer ${accessToken}`,
                     },
                 }
             );

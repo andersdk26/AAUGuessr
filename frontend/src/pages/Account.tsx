@@ -53,7 +53,7 @@ function Account() {
                         placeholder="access token"
                         ref={accessTokenRef}
                     />
-                    <label>New access tokne</label>
+                    <label>New access token</label>
                 </div>
                 <span className="input-group-text">
                     <button
