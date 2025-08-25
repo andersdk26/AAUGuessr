@@ -42,7 +42,7 @@ function HttpTest() {
     const getUser = async () => {
         try {
             const response: AxiosResponse<UserTableProps> = await apiFetch.get(
-                `http://localhost:5173/api/user/getusername`,
+                `/api/user/getusername`,
                 {
                     headers: {
                         "Content-Type": "application/json",
