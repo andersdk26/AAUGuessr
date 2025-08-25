@@ -64,7 +64,7 @@ function HttpTest() {
         }
         try {
             const response: AxiosResponse<messageProps> = await apiFetch.get(
-                `http://localhost:5173/api/user/setusername`,
+                `/user/setusername`,
                 {
                     params: {
                         set: newUsername,
