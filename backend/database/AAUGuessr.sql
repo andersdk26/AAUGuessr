@@ -2,12 +2,12 @@
 -- PostgreSQL database dump
 --
 
-\restrict 2bt1rh4EmL4Lv3LEqpFUf3arGekYoaxS3OhoMPti4qYP2SWcmZ8DFuHUiOu39fB
+\restrict MlMzJKlV4kqqWWRDxKkduHluIGfxOHF1oZU7vKgqPDxAML6pe7HuNBcnDupchQ9
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
 
--- Started on 2025-08-19 02:31:15
+-- Started on 2025-08-25 23:15:49
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -22,7 +22,7 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 --
--- TOC entry 6 (class 2615 OID 16437)
+-- TOC entry 5 (class 2615 OID 16437)
 -- Name: log; Type: SCHEMA; Schema: -; Owner: postgres
 --
 
@@ -32,7 +32,7 @@ CREATE SCHEMA log;
 ALTER SCHEMA log OWNER TO postgres;
 
 --
--- TOC entry 5 (class 2615 OID 16431)
+-- TOC entry 6 (class 2615 OID 16431)
 -- Name: user; Type: SCHEMA; Schema: -; Owner: pg_database_owner
 --
 
@@ -43,7 +43,7 @@ ALTER SCHEMA "user" OWNER TO pg_database_owner;
 
 --
 -- TOC entry 4871 (class 0 OID 0)
--- Dependencies: 5
+-- Dependencies: 6
 -- Name: SCHEMA "user"; Type: COMMENT; Schema: -; Owner: pg_database_owner
 --
 
@@ -62,7 +62,7 @@ SET default_table_access_method = heap;
 CREATE TABLE log."UserErrors" (
     id bigint NOT NULL,
     user_id bigint,
-    error_message character varying(256),
+    error_message character varying(256) NOT NULL,
     "timestamp" timestamp without time zone DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -91,13 +91,13 @@ ALTER TABLE log."UserErrors" ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
 
 CREATE TABLE "user"."RefreshTokens" (
     id bigint NOT NULL,
-    token character(256) NOT NULL,
+    token character varying(64) NOT NULL,
     "userId" bigint NOT NULL,
     expires timestamp without time zone NOT NULL,
     "createdAt" timestamp without time zone DEFAULT now() NOT NULL,
-    "createdByIp" character(39) NOT NULL,
+    "createdByIp" character varying(39) NOT NULL,
     "revokedAt" timestamp without time zone,
-    "revokedByIp" character(39),
+    "revokedByIp" character varying(39),
     "replacedByTokenId" bigint
 );
 
@@ -126,9 +126,9 @@ ALTER TABLE "user"."RefreshTokens" ALTER COLUMN id ADD GENERATED ALWAYS AS IDENT
 
 CREATE TABLE "user"."Users" (
     id bigint NOT NULL,
-    username character(32),
-    email character(128),
-    password character(256)
+    username character varying(32),
+    email character varying(128),
+    password character varying(128)
 );
 
 
@@ -141,12 +141,6 @@ ALTER TABLE "user"."Users" OWNER TO postgres;
 --
 
 COPY log."UserErrors" (id, user_id, error_message, "timestamp") FROM stdin;
-11	\N	Failed to clear refresh token in database	2025-08-19 00:07:02.623151
-12	7266747678	Failed to insert refresh token: error returned from database: column "user_id" of relation "RefreshTokens" does not exist	2025-08-19 00:20:03.677882
-13	7266747678	Failed to insert refresh token: error returned from database: column "userid" of relation "RefreshTokens" does not exist	2025-08-19 00:21:13.741492
-14	7266747678	Failed to insert refresh token: error returned from database: column "userid" of relation "RefreshTokens" does not exist	2025-08-19 00:23:07.388914
-15	7266747678	Failed to insert refresh token: error returned from database: column "createdbyip" of relation "RefreshTokens" does not exist	2025-08-19 00:24:07.145437
-16	7266747678	Failed to insert refresh token: error returned from database: null value in column "id" of relation "RefreshTokens" violates not-null constraint	2025-08-19 00:25:26.334885
 \.
 
 
@@ -157,7 +151,7 @@ COPY log."UserErrors" (id, user_id, error_message, "timestamp") FROM stdin;
 --
 
 COPY "user"."RefreshTokens" (id, token, "userId", expires, "createdAt", "createdByIp", "revokedAt", "revokedByIp", "replacedByTokenId") FROM stdin;
-1	4b8a1e1e73a51ddc80bab358943166e5f23ef7b17ce343b492522b8fd0f9cf38                                                                                                                                                                                                	7266747678	2025-09-18 00:28:36.076881	2025-08-19 00:28:36.077099	127.0.0.1                              	\N	\N	\N
+1	dc7063cf3293628cd7eaac05315a29eaa01e2ffef75453f1b703272ff6fecc52	7266747678	2025-09-24 21:10:04.193017	2025-08-25 21:10:04.195721	127.0.0.1	2025-08-25 21:10:50.106043	127.0.0.1	\N
 \.
 
 
@@ -168,9 +162,9 @@ COPY "user"."RefreshTokens" (id, token, "userId", expires, "createdAt", "created
 --
 
 COPY "user"."Users" (id, username, email, password) FROM stdin;
-1	Hej                             	1@mail.com                                                                                                                      	$argon2id$v=19$m=32768,t=3,p=1$oNvI/X9x3Iqa335KGYvmuw$71plIoXmj/MMGiXSnVvLLUjTDqaupFrQWE2FhqJ6+4M                                                                                                                                                               
-7266747678	Anders                          	andersdk26@gmail.com                                                                                                            	$argon2id$v=19$m=32768,t=3,p=1$oNvI/X9x3Iqa335KGYvmuw$71plIoXmj/MMGiXSnVvLLUjTDqaupFrQWE2FhqJ6+4M                                                                                                                                                               
-2	sdfnjkdsln                      	2@mail.com                                                                                                                      	$argon2id$v=19$m=32768,t=3,p=1$oNvI/X9x3Iqa335KGYvmuw$71plIoXmj/MMGiXSnVvLLUjTDqaupFrQWE2FhqJ6+4M                                                                                                                                                               
+1	Hej	1@mail.com	$argon2id$v=19$m=32768,t=3,p=1$oNvI/X9x3Iqa335KGYvmuw$71plIoXmj/MMGiXSnVvLLUjTDqaupFrQWE2FhqJ6+4M
+2	sdfnjkdsln	2@mail.com	$argon2id$v=19$m=32768,t=3,p=1$oNvI/X9x3Iqa335KGYvmuw$71plIoXmj/MMGiXSnVvLLUjTDqaupFrQWE2FhqJ6+4M
+7266747678	Anders	anders@gmail.com	$argon2id$v=19$m=32768,t=3,p=1$oNvI/X9x3Iqa335KGYvmuw$71plIoXmj/MMGiXSnVvLLUjTDqaupFrQWE2FhqJ6+4M
 \.
 
 
@@ -180,7 +174,7 @@ COPY "user"."Users" (id, username, email, password) FROM stdin;
 -- Name: UserErrors_id_seq; Type: SEQUENCE SET; Schema: log; Owner: postgres
 --
 
-SELECT pg_catalog.setval('log."UserErrors_id_seq"', 16, true);
+SELECT pg_catalog.setval('log."UserErrors_id_seq"', 1, false);
 
 
 --
@@ -248,18 +242,18 @@ ALTER TABLE ONLY "user"."RefreshTokens"
 
 --
 -- TOC entry 4872 (class 0 OID 0)
--- Dependencies: 5
+-- Dependencies: 6
 -- Name: SCHEMA "user"; Type: ACL; Schema: -; Owner: pg_database_owner
 --
 
 GRANT USAGE ON SCHEMA "user" TO PUBLIC;
 
 
--- Completed on 2025-08-19 02:31:15
+-- Completed on 2025-08-25 23:15:50
 
 --
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 2bt1rh4EmL4Lv3LEqpFUf3arGekYoaxS3OhoMPti4qYP2SWcmZ8DFuHUiOu39fB
+\unrestrict MlMzJKlV4kqqWWRDxKkduHluIGfxOHF1oZU7vKgqPDxAML6pe7HuNBcnDupchQ9
 
