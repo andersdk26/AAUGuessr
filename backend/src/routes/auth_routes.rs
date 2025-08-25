@@ -54,7 +54,7 @@ async fn login_user(mut db: Connection<AagDb>, jar: &CookieJar<'_>, ip: ClientIp
                                 // Successfully logged in
                                 let access_token = generate_access_token(user_id).await;
 
-                                if !generate_refresh_token(db, jar, user_id, user.stay_signed_in, ip).await {
+                                if !generate_refresh_token(db, jar, user_id, user.stay_signed_in, ip, "").await {
                                     return Err(Status::InternalServerError);
                                 }                             
 
@@ -141,7 +141,7 @@ async fn create_user(mut db: Connection<AagDb>, jar: &CookieJar<'_>, ip: ClientI
                 }
                 let access_token = generate_access_token(user_id).await;
 
-                if !generate_refresh_token(db, jar, user_id, user.stay_signed_in, ip).await {
+                if !generate_refresh_token(db, jar, user_id, user.stay_signed_in, ip, "").await {
                     return Err(Status::InternalServerError);
                 } 
 
@@ -178,8 +178,7 @@ async fn logout_user(mut db: Connection<AagDb>, jar: &CookieJar<'_>, ip: ClientI
     let time_now = Utc::now().naive_utc();
 
     // Clear the refresh token in the database
-    let result = sqlx::query("UPDATE \"user\".\"RefreshTokens\" SET expires = $1, \"revokedAt\" = $2, \"revokedByIp\" = $3  WHERE token = $4;")
-        .bind(time_now) // Set expiration to now
+    let result = sqlx::query("UPDATE \"user\".\"RefreshTokens\" SET \"revokedAt\" = $1, \"revokedByIp\" = $2 WHERE token = $3;")
         .bind(time_now)
         .bind(ip.0.to_string()) // Set revokedByIp to empty string
         .bind(sha256_hash(&refresh_token)) // Use the SHA256 hash of the token
@@ -211,7 +210,6 @@ async fn refresh_token(mut db: Connection<AagDb>, jar: &CookieJar<'_>, ip: Clien
     if refresh_token.is_empty() {
         return Err(Status::BadRequest);
     }
-    println!("Refresh token: {}", &refresh_token);
 
     let hashed_token = sha256_hash(&refresh_token);
 
@@ -223,36 +221,42 @@ async fn refresh_token(mut db: Connection<AagDb>, jar: &CookieJar<'_>, ip: Clien
 
     match result {
         Ok(row) => {
-            println!("Token found in DB: {}", row.try_get::<String, _>("token").unwrap_or_default());
-            // println!("Token expires at: {}", row.try_get::<chrono::DateTime<Utc>, _>("expires").unwrap_or_default());
-            // let expires: NaiveDateTime = row.try_get("expires").unwrap_or(Utc::now().naive_utc());
-            // println!("Expires: {}", expires);
+            let time_now = Utc::now().naive_utc();
 
             // Check if the token is expired
             let expires: NaiveDateTime = row.try_get("expires").unwrap_or(Utc::now().naive_utc());
             if Utc::now().naive_utc() > expires {
-                println!("Token expired at: {}", expires);
                 return Err(Status::Unauthorized);
             }
 
             // Check if the token is revoked
             let revoked_at: Option<NaiveDateTime> = row.try_get("revokedAt").ok();
             if revoked_at.is_some() {
-                println!("Token revoked at: {:?}", revoked_at);
                 return Err(Status::Unauthorized);
             }
 
-            // Generate new access token
+            // Get the user ID associated with the token
             let user_id: i64 = row.try_get("userId").unwrap_or(0);
             if user_id == 0 {
-                println!("Invalid user ID associated with the token");
                 return Err(Status::Unauthorized);
             }
+
+            // Fetch user details to check stay_signed_in preference
+            let created_at: NaiveDateTime = row.try_get("createdAt").unwrap_or(time_now);
+            if created_at == time_now {
+                return Err(Status::InternalServerError);
+            }
+            let stay_signed_in = expires - created_at > chrono::Duration::days(1);
+
+            // Generate new access token
             let access_token = generate_access_token(user_id).await;
 
-            // Optionally, you could also generate a new refresh token here and set it in the cookie
-            // For simplicity, we'll keep the same refresh token for now
+            // Create a new refresh token and set it in the cookie and revoke the old one
+            if !generate_refresh_token(db, jar, user_id, stay_signed_in, ip, &hashed_token).await {
+                return Err(Status::InternalServerError);
+            }
 
+            // Return the new access token
             return Ok(Json(LoginResponse {
                 access_token,
             }));
@@ -317,7 +321,7 @@ async fn generate_access_token(user_id: i64) -> String {
     let header = Header::default();
     let body = JwtClaims {
         sub: user_id.to_string(),
-        exp: (chrono::Utc::now() + chrono::Duration::minutes(5)).timestamp() as usize, // 15 minutes expiration CHANGE IN PRODUCTION
+        exp: (chrono::Utc::now() + chrono::Duration::minutes(15)).timestamp() as usize, // 15 minutes expiration
         iat: chrono::Utc::now().timestamp() as usize,
     };
     
@@ -328,10 +332,13 @@ async fn generate_access_token(user_id: i64) -> String {
     return token
 }
 
-async fn generate_refresh_token(mut db: Connection<AagDb>, jar: &CookieJar<'_>, user_id: i64, stay_signed_in: bool, ip: ClientIp) -> bool {
+async fn generate_refresh_token(mut db: Connection<AagDb>, jar: &CookieJar<'_>, user_id: i64, stay_signed_in: bool, ip: ClientIp, old_token_hash: &str) -> bool {
     let expire_time: NaiveDateTime;
+
+    // Generate a new random refresh token
     let token = random_alphanumeric(32);
 
+    // Set the refresh token in a secure cookie
     set_refresh_cookie(jar, token.clone(), stay_signed_in);
 
     if stay_signed_in {
@@ -342,10 +349,11 @@ async fn generate_refresh_token(mut db: Connection<AagDb>, jar: &CookieJar<'_>, 
         expire_time = Utc::now().naive_utc() + chrono::Duration::hours(1);
     }
 
+    // Insert the new refresh token into the database
     let result = sqlx::query("INSERT INTO \"user\".\"RefreshTokens\" (\"userId\", token, expires, \"createdByIp\") VALUES ($1, $2, $3, $4)")
         .bind(user_id)
         .bind(sha256_hash(&token)) // Store the SHA256 hash of the token
-        .bind(expire_time) // Set expiration to 30
+        .bind(expire_time) // Set expiration to 30 days or 1 hour from now
         .bind(ip.0.to_string()) // Store the IP address that created the token
         .execute(&mut **db)
         .await;
@@ -353,6 +361,28 @@ async fn generate_refresh_token(mut db: Connection<AagDb>, jar: &CookieJar<'_>, 
     if let Err(e) = result {
         log_error(db, user_id, &format!("Failed to insert refresh token: {}", e)).await;
         return false;
+    }
+
+    // Revoke the old refresh token
+    let result2 = sqlx::query("UPDATE \"user\".\"RefreshTokens\" SET \"revokedAt\" = $1, \"revokedByIp\" = $2  WHERE token = $3;")
+        .bind(Utc::now().naive_utc()) // Set revokedAt to now without timezone
+        .bind(ip.0.to_string()) // Set revokedByIp to the current IP address
+        .bind(&old_token_hash) // Use the SHA256 hash of the token
+        .execute(&mut **db)
+        .await;
+
+    match result2 {
+        Ok(row) => {
+            // Check if any row was affected
+            if row.rows_affected() == 0 {
+                log_error(db, user_id, &format!("Old refresh token not revoked in database: {}", &old_token_hash)).await;
+                return false;
+            }
+        },
+        Err(e) => {
+            log_error(db, user_id, &format!("Failed to revoke old refresh token: {}", e)).await;
+            return false;
+        }
     }
 
     return true;
@@ -380,6 +410,7 @@ fn random_alphanumeric(len: usize) -> String {
                     abcdefghijklmnopqrstuvwxyz\
                     0123456789";
 
+    // Generate random string
     let mut rng = rand::rng();
     (0..len)
         .map(|_| {
@@ -393,7 +424,7 @@ fn sha256_hash(token: &str) -> String {
     let mut hasher = Sha256::new();
     hasher.update(token.as_bytes());
     let result = hasher.finalize();
-    hex::encode(result) // Gem i DB som hex string
+    hex::encode(result) // Save in DB as hex string
 }
 
 pub fn get_routes() -> Vec<Route> {
