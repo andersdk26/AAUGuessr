@@ -5,6 +5,7 @@ use rocket::serde::json::Json;
 use rocket::{routes, Route};
 use rocket_db_pools::{sqlx, Connection};
 use chrono::Utc;
+use chrono::NaiveDateTime;
 use sqlx::Row;
 use regex::Regex;
 use rocket::http::{Cookie, CookieJar, SameSite};
@@ -174,7 +175,7 @@ async fn logout_user(mut db: Connection<AagDb>, jar: &CookieJar<'_>, ip: ClientI
     // Clear the refresh token cookie
     jar.remove(Cookie::from("refreshToken"));
 
-    let time_now = Utc::now();
+    let time_now = Utc::now().naive_utc();
 
     // Clear the refresh token in the database
     let result = sqlx::query("UPDATE \"user\".\"RefreshTokens\" SET expires = $1, \"revokedAt\" = $2, \"revokedByIp\" = $3  WHERE token = $4;")
@@ -200,7 +201,7 @@ async fn logout_user(mut db: Connection<AagDb>, jar: &CookieJar<'_>, ip: ClientI
     return Ok(Status::Ok);
 }
 
-#[get("/user/refreshtoken")]
+#[post("/user/refreshtoken")]
 async fn refresh_token(mut db: Connection<AagDb>, jar: &CookieJar<'_>, ip: ClientIp) -> Result<Json<LoginResponse>, Status> {
     // Check if the refresh token cookie exists
     let refresh_token = jar.get("refreshToken")
@@ -210,6 +211,7 @@ async fn refresh_token(mut db: Connection<AagDb>, jar: &CookieJar<'_>, ip: Clien
     if refresh_token.is_empty() {
         return Err(Status::BadRequest);
     }
+    println!("Refresh token: {}", &refresh_token);
 
     let hashed_token = sha256_hash(&refresh_token);
 
@@ -221,21 +223,29 @@ async fn refresh_token(mut db: Connection<AagDb>, jar: &CookieJar<'_>, ip: Clien
 
     match result {
         Ok(row) => {
+            println!("Token found in DB: {}", row.try_get::<String, _>("token").unwrap_or_default());
+            // println!("Token expires at: {}", row.try_get::<chrono::DateTime<Utc>, _>("expires").unwrap_or_default());
+            // let expires: NaiveDateTime = row.try_get("expires").unwrap_or(Utc::now().naive_utc());
+            // println!("Expires: {}", expires);
+
             // Check if the token is expired
-            let expires: chrono::DateTime<Utc> = row.try_get("expires").unwrap_or(Utc::now());
-            if Utc::now() > expires {
+            let expires: NaiveDateTime = row.try_get("expires").unwrap_or(Utc::now().naive_utc());
+            if Utc::now().naive_utc() > expires {
+                println!("Token expired at: {}", expires);
                 return Err(Status::Unauthorized);
             }
 
             // Check if the token is revoked
-            let revoked_at: Option<chrono::DateTime<Utc>> = row.try_get("revokedAt").ok();
+            let revoked_at: Option<NaiveDateTime> = row.try_get("revokedAt").ok();
             if revoked_at.is_some() {
+                println!("Token revoked at: {:?}", revoked_at);
                 return Err(Status::Unauthorized);
             }
 
             // Generate new access token
             let user_id: i64 = row.try_get("userId").unwrap_or(0);
             if user_id == 0 {
+                println!("Invalid user ID associated with the token");
                 return Err(Status::Unauthorized);
             }
             let access_token = generate_access_token(user_id).await;
@@ -319,17 +329,17 @@ async fn generate_access_token(user_id: i64) -> String {
 }
 
 async fn generate_refresh_token(mut db: Connection<AagDb>, jar: &CookieJar<'_>, user_id: i64, stay_signed_in: bool, ip: ClientIp) -> bool {
-    let expire_time: chrono::DateTime<Utc>;
+    let expire_time: NaiveDateTime;
     let token = random_alphanumeric(32);
 
     set_refresh_cookie(jar, token.clone(), stay_signed_in);
 
     if stay_signed_in {
         // Set expiration time to 30 days from now
-        expire_time = Utc::now() + chrono::Duration::days(30);
+        expire_time = Utc::now().naive_utc() + chrono::Duration::days(30);
     } else {
         // Set expiration time to 1 hour from now
-        expire_time = Utc::now() + chrono::Duration::hours(1);
+        expire_time = Utc::now().naive_utc() + chrono::Duration::hours(1);
     }
 
     let result = sqlx::query("INSERT INTO \"user\".\"RefreshTokens\" (\"userId\", token, expires, \"createdByIp\") VALUES ($1, $2, $3, $4)")
