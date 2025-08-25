@@ -1,5 +1,5 @@
 import axios from "axios";
-import useAuth from "./authentication/useAuth";
+import { emitTokenChange } from "./authentication/AuthContext";
 
 // Create an axios instance
 const apiFetch = axios.create({
@@ -32,11 +32,9 @@ apiFetch.interceptors.response.use(
                     { withCredentials: true }
                 );
 
-                alert("Session refreshed");
+                // Update the token in AuthContext
                 const newToken = res.data.access_token;
-                const { setAccessToken } = useAuth();
-
-                setAccessToken(newToken);
+                emitTokenChange(newToken);
 
                 // Set the new token in the original request and retry it
                 originalRequest.headers.Authorization = `Bearer ${newToken}`;
