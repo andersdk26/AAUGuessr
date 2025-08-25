@@ -27,6 +27,7 @@ function HttpTest() {
     const usernameRef = useRef<HTMLInputElement>(null);
     const { accessToken } = useAuth();
 
+    // Example GET request
     const getHello = async () => {
         try {
             const response: AxiosResponse<messageProps> = await apiFetch.get(
@@ -39,6 +40,7 @@ function HttpTest() {
         }
     };
 
+    // Get user data from authenticated user
     const getUser = async () => {
         try {
             const response: AxiosResponse<UserTableProps> = await apiFetch.get(
@@ -46,7 +48,6 @@ function HttpTest() {
                 {
                     headers: {
                         "Content-Type": "application/json",
-                        // Authorization: `Bearer ${accessToken}`,
                     },
                 }
             );
@@ -58,6 +59,7 @@ function HttpTest() {
         }
     };
 
+    // Set user username for authenticated user
     const setUserUsername = async (newUsername: string | null) => {
         if (newUsername == null) {
             return;
@@ -88,6 +90,7 @@ function HttpTest() {
         setTimeout(setShowMessage, 2000, "");
     };
 
+    // Fetch hello data on component mount
     useEffect(() => {
         getHello();
     }, []);
