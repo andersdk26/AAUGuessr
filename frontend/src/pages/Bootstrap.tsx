@@ -116,7 +116,7 @@ function Bootstrap() {
             <Popover
                 placement="left"
                 title="Popover left"
-                content="Jeg er til venstre"
+                content="Jeg er til venstreeeeeeeeee"
             >
                 <button className="btn btn-secondary">Left</button>
             </Popover>
@@ -124,7 +124,7 @@ function Bootstrap() {
             <Popover
                 placement="right"
                 title="Popover right"
-                content="Jeg er til højre"
+                content="Jeg er til højreeeeeeeeeeee"
             >
                 <button className="btn btn-secondary">Right</button>
             </Popover>

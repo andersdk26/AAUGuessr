@@ -7,6 +7,18 @@ interface PopoverProps {
     placement?: "top" | "right" | "bottom" | "left";
 }
 
+// runtime mapping
+const placementMap = {
+    top: "top",
+    right: "end",
+    bottom: "bottom",
+    left: "start",
+} as const;
+
+function getBsPlacement(p: "top" | "right" | "bottom" | "left") {
+    return placementMap[p];
+}
+
 /**
  * A Popover component with arrow correctly centered on each side.
  */
@@ -30,7 +42,7 @@ function Popover({
             popoverEl.style.left = "";
 
             if (placement === "bottom") {
-                popoverEl.style.top = `${triggerRect.height + 8}px`;
+                popoverEl.style.top = `${triggerRect.height + 8 + 16}px`;
                 popoverEl.style.left = `${
                     triggerRect.width / 2 - popoverEl.offsetWidth / 2
                 }px`;
@@ -43,10 +55,10 @@ function Popover({
                 popoverEl.style.top = `${
                     triggerRect.height / 2 - popoverEl.offsetHeight / 2
                 }px`;
-                popoverEl.style.left = `${-popoverEl.offsetWidth - 8}px`;
+                popoverEl.style.left = `${-popoverEl.offsetWidth - 8 - 40}px`;
             } else if (placement === "right") {
                 popoverEl.style.top = `${
-                    triggerRect.height / 2 - popoverEl.offsetHeight / 2
+                    triggerRect.height / 2 - popoverEl.offsetHeight / 2 + 8
                 }px`;
                 popoverEl.style.left = `${triggerRect.width + 8}px`;
             }
@@ -66,10 +78,12 @@ function Popover({
             {visible && (
                 <div
                     ref={popoverRef}
-                    className={`popover bs-popover-${placement} show`}
+                    className={`popover bs-popover-${getBsPlacement(
+                        placement
+                    )} show`}
                     style={{ position: "absolute", zIndex: 1000 }}
                 >
-                    {/* Pil i midten */}
+                    {/* Arrow */}
                     <div
                         className="popover-arrow"
                         style={{
@@ -77,7 +91,7 @@ function Popover({
                             ...(placement === "top" && {
                                 left: "50%",
                                 transform: "translateX(-50%)",
-                                top: "0",
+                                top: "100%",
                             }),
                             ...(placement === "bottom" && {
                                 left: "50%",
