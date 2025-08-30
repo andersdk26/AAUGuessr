@@ -11,6 +11,7 @@ import Placeholder from "../components/Placeholder";
 import ProgressBar from "../components/ProgressBar";
 import "../App.css";
 import Spinner from "../components/spinner";
+import Popover from "../components/Popover";
 
 /**
  * Site showing Bootstrap components
@@ -96,6 +97,37 @@ function Bootstrap() {
             )}
             <ListGroup items={list}></ListGroup>
             <Button onClick={() => setShowModal(true)}>Show Modal</Button>
+            <Popover
+                placement="bottom"
+                title="Popover bottom"
+                content="Jeg er nedenunder"
+            >
+                <button className="btn btn-secondary">Bottom</button>
+            </Popover>
+
+            <Popover
+                placement="top"
+                title="Popover top"
+                content="Jeg er ovenpå"
+            >
+                <button className="btn btn-secondary">Top</button>
+            </Popover>
+
+            <Popover
+                placement="left"
+                title="Popover left"
+                content="Jeg er til venstre"
+            >
+                <button className="btn btn-secondary">Left</button>
+            </Popover>
+
+            <Popover
+                placement="right"
+                title="Popover right"
+                content="Jeg er til højre"
+            >
+                <button className="btn btn-secondary">Right</button>
+            </Popover>
             <Tabs
                 items={[
                     { name: "Overview", path: "overview" },
